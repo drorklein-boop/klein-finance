@@ -35,7 +35,7 @@ def num(val):
     try: return float(str(val).replace(",","").replace("\u20aa","").replace("$","").replace("%","").replace(" ","").strip())
     except: return 0.0
 
-# ── File detection ────────────────────────────────────────────────────────────
+# ââ File detection ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 def detect_type(path):
     name = path.name
     if "\u05e2\u05d5\u05e9" in name or "\u05dc\u05d0\u05d5\u05de\u05d9" in name: return "bank"
@@ -67,7 +67,7 @@ def find_files():
         found["rsu_image"]=f; ok(f"Found RSU image: {f.name}")
     return found
 
-# ── Parsers ───────────────────────────────────────────────────────────────────
+# ââ Parsers âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 def parse_bank(path):
     engine = "xlrd" if str(path).endswith(".xls") else "openpyxl"
     df = pd.read_excel(path, header=None, engine=engine)
@@ -78,25 +78,33 @@ def parse_bank(path):
 
 def parse_pension(path):
     df = None
-    for engine in ["xlrd","openpyxl"]:
-        try: df = pd.read_excel(path, header=None, engine=engine); break
+    # Try HTML first (Mislaka files are often HTML disguised as .xls)
+    for enc in ["windows-1255", "utf-8", "iso-8859-8"]:
+        try:
+            tables = pd.read_html(str(path), encoding=enc)
+            if tables: df = tables[0]; break
         except: pass
+    # Fall back to Excel engines
+    if df is None:
+        for engine in ["xlrd", "openpyxl"]:
+            try: df = pd.read_excel(path, header=None, engine=engine); break
+            except: pass
     if df is None: return {}
     pension = provident = 0
     for i, row in df.iterrows():
-        if i == 0: continue
         row = list(row)
         if not row[0] or str(row[0]) == "nan": continue
-        t = num(row[4]) if len(row) > 4 else 0
-        if t == 0:
-            for v in row[2:8]:
-                c = num(str(v))
-                if 1000 < c < 10000000: t = c; break
+        # Find the total savings column - look for values > 1000
+        t = 0
+        for col_idx in [4, 3, 5, 2]:
+            if len(row) > col_idx:
+                candidate = num(str(row[col_idx]))
+                if 1000 < candidate < 10000000:
+                    t = candidate; break
         if t == 0: continue
         name = str(row[0])
         if "\u05e4\u05e0\u05e1\u05d9\u05d4" in name: pension += t
         elif "\u05d4\u05e9\u05ea\u05dc\u05de\u05d5\u05ea" in name or "\u05e7\u05e8\u05df" in name: provident += t
-        else: pension += t
     return {"pension": pension, "provident": provident}
 
 def parse_invest(path):
@@ -149,7 +157,7 @@ def parse_rsu(path):
         return {"unvested": u, "available": a}
     except: return {}
 
-# ── Main update — ONLY writes to 8 cells ─────────────────────────────────────
+# ââ Main update â ONLY writes to 8 cells âââââââââââââââââââââââââââââââââââââ
 def update_excel(found):
     hdr("Closing Excel")
     os.system("taskkill /f /im excel.exe 2>nul")
@@ -174,7 +182,7 @@ def update_excel(found):
     shutil.copy2(EXCEL, BACKUPS / f"\u05de\u05d0\u05d6\u05df_{stamp}.xlsm")
     ok("Backup created")
 
-    hdr("Updating Excel — 8 cells only")
+    hdr("Updating Excel â 8 cells only")
     wb = load_workbook(EXCEL, keep_vba=True)
     dash = wb["\u05d3\u05e9\u05d1\u05d5\u05e8\u05d3"]
 
