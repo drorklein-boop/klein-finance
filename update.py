@@ -84,6 +84,7 @@ def parse_pension(path):
             except: pass
     if df is None: return {}
     pension = provident = 0
+    products_list = []
     for _, row in df.iterrows():
         row = list(row)
         if not row[0] or str(row[0]) == "nan": continue
@@ -94,9 +95,10 @@ def parse_pension(path):
                 if 1000 < v < 10000000: t = v; break
         if t == 0: continue
         name = str(row[0])
+        products_list.append({"product": name, "total": t})
         if "\u05e4\u05e0\u05e1\u05d9\u05d4" in name: pension += t
         elif "\u05d4\u05e9\u05ea\u05dc\u05de\u05d5\u05ea" in name or "\u05e7\u05e8\u05df" in name: provident += t
-    return {"pension": pension, "provident": provident}
+    return {"pension": pension, "provident": provident, "products": products_list}
 
 def parse_bank(path):
     engine = "xlrd" if str(path).endswith(".xls") else "openpyxl"
@@ -151,6 +153,18 @@ def parse_rsu(path):
         return {"unvested": u, "available": a}
     except: return {}
 
+def update_pension_table(wb, table_name, sheet_name, products):
+    """Update Excel table with pension products so formulas in D10-D13 recalculate."""
+    try:
+        ws = wb.sheets[sheet_name]
+        # Find the table and update rows starting from row 2
+        for i, p in enumerate(products, 2):
+            ws.cells(i, 1).value = p.get("product", "")
+            ws.cells(i, 5).value = p.get("total", 0)
+        ok(f"  Updated table: {table_name}")
+    except Exception as e:
+        warn(f"  Table update error ({table_name}): {e}")
+
 def update_excel_xlwings(values):
     hdr("Updating Excel with xlwings")
     try:
@@ -176,6 +190,14 @@ def update_excel_xlwings(values):
         write("D13", values.get("liat_provident",0), "D13 \u05d4\u05e9\u05ea\u05dc\u05de\u05d5\u05ea \u05dc\u05d9\u05d0\u05ea")
         write("D14", values.get("invest",0),         "D14 \u05ea\u05d9\u05e7 \u05d4\u05e9\u05e7\u05e2\u05d5\u05ea")
         write("D18", values.get("bank",0),           "D18 \u05e2\u05d5\"\u05e9")
+
+        # Update pension tables so D10-D13 formulas recalculate correctly
+        dror_products = values.get("dror_products", [])
+        liat_products = values.get("liat_products", [])
+        if dror_products:
+            update_pension_table(wb, "Tbl_מסלקה_דרור", "דרור - מסלקה", dror_products)
+        if liat_products:
+            update_pension_table(wb, "Tbl_מסלקה_ליאת", "ליאת - מסלקה", liat_products)
 
         rsu_avail = values.get("rsu_available", 0)
         rsu_unves = values.get("rsu_unvested", 0)
@@ -225,6 +247,8 @@ def main():
         "liat_pension":   liat.get("pension", 0),
         "dror_provident": dror.get("provident", 0),
         "liat_provident": liat.get("provident", 0),
+        "dror_products":  dror.get("products", []),
+        "liat_products":  liat.get("products", []),
         "invest":         invest.get("total", 0),
         "bank":           bank.get("balance", 0),
         "rsu_available":  rsu.get("available", 0),
