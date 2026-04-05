@@ -8,7 +8,7 @@ import os, sys, re, shutil, json, urllib.request
 from pathlib import Path
 from datetime import datetime
 
-VERSION    = "1.4"
+VERSION    = "1.5"
 UPDATE_URL = "https://gist.githubusercontent.com/claude-klein-finance/raw/update.py"
 BASE       = Path(__file__).parent
 MONTHLY    = BASE / "monthly"
@@ -353,6 +353,22 @@ def main():
     wb.save(EXCEL)
     ok("Excel saved")
     print_summary(data, found)
+
+    # Write summary to log file
+    log_path = BASE / "last_run.txt"
+    pd_data = data.get("pension_dror", {})
+    pl_data = data.get("pension_liat", {})
+    with open(log_path, "w", encoding="utf-8") as f:
+        f.write(f"Run: {datetime.now()}\n")
+        f.write(f"pension_dror: pension={pd_data.get('pension',0)}, provident={pd_data.get('provident',0)}\n")
+        f.write(f"pension_liat: pension={pl_data.get('pension',0)}, provident={pl_data.get('provident',0)}\n")
+        for p in pd_data.get('products', []):
+            f.write(f"  DROR: {p['product']} | {p['total']}\n")
+        for p in pl_data.get('products', []):
+            f.write(f"  LIAT: {p['product']} | {p['total']}\n")
+        f.write(f"bank balance: {data.get('bank',{}).get('balance',0)}\n")
+        f.write(f"RSU: {data.get('rsu_image',{})}\n")
+    ok(f"Log saved to {log_path}")
 
     hdr("Opening Excel")
     os.startfile(str(EXCEL))
