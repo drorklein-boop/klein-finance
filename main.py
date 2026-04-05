@@ -108,8 +108,11 @@ def parse_pension(path):
         if t == 0: continue
         name = str(row[0])
         products_list.append({"product": name, "total": t})
-        if "\u05e4\u05e0\u05e1\u05d9\u05d4" in name: pension += t
-        elif "\u05d4\u05e9\u05ea\u05dc\u05de\u05d5\u05ea" in name or "\u05e7\u05e8\u05df" in name: provident += t
+        ok(f"    product: {name[:30]} | total: {t}")
+        if "\u05e4\u05e0\u05e1\u05d9\u05d4" in name: pension += t; ok(f"    -> pension +{t}")
+        elif "\u05d4\u05e9\u05ea\u05dc\u05de\u05d5\u05ea" in name or "\u05e7\u05e8\u05df" in name: provident += t; ok(f"    -> provident +{t}")
+        else: ok(f"    -> NOT matched (no category)")
+    ok(f"  TOTAL: pension={pension}, provident={provident}")
     return {"pension": pension, "provident": provident, "products": products_list}
 
 def parse_bank(path):
@@ -207,9 +210,9 @@ def update_excel_xlwings(values):
         dror_products = values.get("dror_products", [])
         liat_products = values.get("liat_products", [])
         if dror_products:
-            update_pension_table(wb, "Tbl_ÃÂÃÂ¡ÃÂÃÂ§ÃÂ_ÃÂÃÂ¨ÃÂÃÂ¨", "ÃÂÃÂ¨ÃÂÃÂ¨ - ÃÂÃÂ¡ÃÂÃÂ§ÃÂ", dror_products)
+            update_pension_table(wb, "Tbl_ÃÂÃÂÃÂÃÂ¡ÃÂÃÂÃÂÃÂ§ÃÂÃÂ_ÃÂÃÂÃÂÃÂ¨ÃÂÃÂÃÂÃÂ¨", "ÃÂÃÂÃÂÃÂ¨ÃÂÃÂÃÂÃÂ¨ - ÃÂÃÂÃÂÃÂ¡ÃÂÃÂÃÂÃÂ§ÃÂÃÂ", dror_products)
         if liat_products:
-            update_pension_table(wb, "Tbl_ÃÂÃÂ¡ÃÂÃÂ§ÃÂ_ÃÂÃÂÃÂÃÂª", "ÃÂÃÂÃÂÃÂª - ÃÂÃÂ¡ÃÂÃÂ§ÃÂ", liat_products)
+            update_pension_table(wb, "Tbl_ÃÂÃÂÃÂÃÂ¡ÃÂÃÂÃÂÃÂ§ÃÂÃÂ_ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂª", "ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂª - ÃÂÃÂÃÂÃÂ¡ÃÂÃÂÃÂÃÂ§ÃÂÃÂ", liat_products)
 
         rsu_avail = values.get("rsu_available", 0)
         rsu_unves = values.get("rsu_unvested", 0)
