@@ -76,13 +76,25 @@ def parse_pension(path):
     for enc in ["windows-1255", "utf-8", "iso-8859-8"]:
         try:
             tables = pd.read_html(str(path), encoding=enc)
-            if tables: df = tables[0]; break
-        except: pass
+            if tables:
+                df = tables[0]
+                ok(f"  Pension read as HTML ({enc}), shape: {df.shape}")
+                break
+        except Exception as e:
+            pass
     if df is None:
         for engine in ["xlrd", "openpyxl"]:
-            try: df = pd.read_excel(path, header=None, engine=engine); break
-            except: pass
-    if df is None: return {}
+            try:
+                df = pd.read_excel(path, header=None, engine=engine)
+                ok(f"  Pension read as Excel ({engine}), shape: {df.shape}")
+                break
+            except Exception as e:
+                warn(f"  Pension {engine} error: {e}")
+    if df is None:
+        warn(f"  Could not read pension file: {path.name}")
+        return {}
+    # Print first few rows for debugging
+    ok(f"  First rows: {df.head(3).values.tolist()}")
     pension = provident = 0
     products_list = []
     for _, row in df.iterrows():
@@ -195,9 +207,9 @@ def update_excel_xlwings(values):
         dror_products = values.get("dror_products", [])
         liat_products = values.get("liat_products", [])
         if dror_products:
-            update_pension_table(wb, "Tbl_מסלקה_דרור", "דרור - מסלקה", dror_products)
+            update_pension_table(wb, "Tbl_××¡××§×_××¨××¨", "××¨××¨ - ××¡××§×", dror_products)
         if liat_products:
-            update_pension_table(wb, "Tbl_מסלקה_ליאת", "ליאת - מסלקה", liat_products)
+            update_pension_table(wb, "Tbl_××¡××§×_××××ª", "××××ª - ××¡××§×", liat_products)
 
         rsu_avail = values.get("rsu_available", 0)
         rsu_unves = values.get("rsu_unvested", 0)
