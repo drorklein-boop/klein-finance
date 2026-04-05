@@ -223,17 +223,6 @@ def parse_all(found):
         except Exception as e: warn(f"Error ({key}): {e}"); data[key]={}
     return data
 
-def update_mislaka(wb,sheet,pension_data):
-    if sheet not in wb.sheetnames or not pension_data: return
-    products=pension_data.get("products",[])
-    if not products: return
-    ws=wb[sheet]
-    for i,p in enumerate(products,2):
-        ws.cell(row=i,column=1).value=p.get("product","")
-        ws.cell(row=i,column=5).value=p.get("total",0)
-        ws.cell(row=i,column=12).value=p.get("fee_deposit",0)
-        ws.cell(row=i,column=13).value=p.get("fee_accum",0)
-        ws.cell(row=i,column=14).value=p.get("return_ytd",0)
 
 def update_excel(data):
     hdr("Updating Excel")
@@ -256,7 +245,7 @@ def update_excel(data):
     sc(18,4,data.get("bank",{}).get("balance",0),'\u05e2\u05d5"\u05e9')
     ws.cell(row=2,column=1).value=f"\u05e2\u05d3\u05db\u05d5\u05df \u05d0\u05d7\u05e8\u05d5\u05df: {datetime.now().strftime('%d/%m/%Y')}"
 
-    # Update RSU — write to ALIGN RSU sheet H13/H14
+    # Update RSU â write to ALIGN RSU sheet H13/H14
     rsu=data.get("rsu_image",{})
     avail=rsu.get("available",0); unves=rsu.get("unvested",0)
     if avail or unves:
@@ -266,9 +255,7 @@ def update_excel(data):
             rws.cell(row=14,column=8).value=unves
             ok(f"  RSU: available={avail}, unvested={unves}")
 
-    # Update mislaka sheets (pension data)
-    update_mislaka(wb,"\u05d3\u05e8\u05d5\u05e8 - \u05de\u05e1\u05dc\u05e7\u05d4",data.get("pension_dror",{}))
-    update_mislaka(wb,"\u05dc\u05d9\u05d0\u05ea - \u05de\u05e1\u05dc\u05e7\u05d4",data.get("pension_liat",{}))
+    # Mislaka sheets NOT updated - they have formulas dashboard reads from
 
     # Update transaction sheets
     for sheet,key in {
