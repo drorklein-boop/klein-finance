@@ -8,7 +8,7 @@ import os, sys, re, shutil, json, urllib.request
 from pathlib import Path
 from datetime import datetime
 
-VERSION    = "1.5"
+VERSION    = "1.6"
 UPDATE_URL = "https://gist.githubusercontent.com/claude-klein-finance/raw/update.py"
 BASE       = Path(__file__).parent
 MONTHLY    = BASE / "monthly"
@@ -242,6 +242,22 @@ def parse_all(found):
         except Exception as e: warn(f"Error ({key}): {e}"); data[key]={}
     return data
 
+def update_mislaka_sheet(wb, sheet_name, pension_data):
+    """Update only data rows in pension sheet, preserving structure."""
+    if sheet_name not in wb.sheetnames or not pension_data:
+        return
+    products = pension_data.get("products", [])
+    if not products:
+        return
+    ws = wb[sheet_name]
+    # Write product data starting from row 2
+    for i, product in enumerate(products, 2):
+        ws.cell(row=i, column=1).value = product.get("product", "")
+        ws.cell(row=i, column=5).value = product.get("total", 0)
+        ws.cell(row=i, column=12).value = product.get("fee_deposit", 0)
+        ws.cell(row=i, column=13).value = product.get("fee_accum", 0)
+        ws.cell(row=i, column=14).value = product.get("return_ytd", 0)
+
 def update_dashboard(wb, data):
     if "\u05d3\u05e9\u05d1\u05d5\u05e8\u05d3" not in wb.sheetnames: return
     ws=wb["\u05d3\u05e9\u05d1\u05d5\u05e8\u05d3"]
@@ -276,6 +292,10 @@ def update_dashboard(wb, data):
         updates.append(f"RSU Unvested: ${rsu['unvested']:,.0f}")
 
     ws.cell(row=2,column=1).value=f"\u05e2\u05d3\u05db\u05d5\u05df \u05d0\u05d7\u05e8\u05d5\u05df: {datetime.now().strftime('%d/%m/%Y')}"
+    
+    # Also update מסלקה sheets with pension data
+    update_mislaka_sheet(wb, "\u05d3\u05e8\u05d5\u05e8 - \u05de\u05e1\u05dc\u05e7\u05d4", data.get("pension_dror", {}))
+    update_mislaka_sheet(wb, "\u05dc\u05d9\u05d0\u05ea - \u05de\u05e1\u05dc\u05e7\u05d4", data.get("pension_liat", {}))
     for u in updates: ok(f"  {u}")
 
 def replace_sheet_data(wb, sheet_name, df):
@@ -338,14 +358,13 @@ def main():
     for p in products[:5]:
         print(f"    product: {p['product'][:30]} | total: {p['total']}")
 
+    # Only replace transaction sheets - NOT pension/mislaka sheets
+    # Pension sheets have formulas that dashboard reads from
     sheet_map = {
         "\u05e2\u05d5\u05e9":                     "bank",
         "\u05e2\u05e1\u05e7\u05d0\u05d5\u05ea \u05d1\u05de\u05d5\u05e2\u05d3 \u05d4\u05d7\u05d9\u05d5\u05d1": "credit",
         '\u05e2\u05e1\u05e7\u05d0\u05d5\u05ea \u05d7\u05d5"\u05dc \u05d5\u05de\u05d8"\u05d7':              "foreign",
         "\u05d0\u05d9\u05e9\u05e8\u05d0\u05db\u05e8\u05d8":              "isracard",
-        "\u05d3\u05e8\u05d5\u05e8 - \u05de\u05e1\u05dc\u05e7\u05d4":     "pension_dror",
-        "\u05dc\u05d9\u05d0\u05ea - \u05de\u05e1\u05dc\u05e7\u05d4":     "pension_liat",
-        "\u05ea\u05d9\u05e7 \u05d4\u05e9\u05e7\u05e2\u05d5\u05ea \u05e2\u05d3\u05db\u05e0\u05d9": "invest",
     }
     for sheet, key in sheet_map.items():
         replace_sheet_data(wb, sheet, data.get(key,{}).get("raw_df"))
@@ -353,22 +372,6 @@ def main():
     wb.save(EXCEL)
     ok("Excel saved")
     print_summary(data, found)
-
-    # Write summary to log file
-    log_path = BASE / "last_run.txt"
-    pd_data = data.get("pension_dror", {})
-    pl_data = data.get("pension_liat", {})
-    with open(log_path, "w", encoding="utf-8") as f:
-        f.write(f"Run: {datetime.now()}\n")
-        f.write(f"pension_dror: pension={pd_data.get('pension',0)}, provident={pd_data.get('provident',0)}\n")
-        f.write(f"pension_liat: pension={pl_data.get('pension',0)}, provident={pl_data.get('provident',0)}\n")
-        for p in pd_data.get('products', []):
-            f.write(f"  DROR: {p['product']} | {p['total']}\n")
-        for p in pl_data.get('products', []):
-            f.write(f"  LIAT: {p['product']} | {p['total']}\n")
-        f.write(f"bank balance: {data.get('bank',{}).get('balance',0)}\n")
-        f.write(f"RSU: {data.get('rsu_image',{})}\n")
-    ok(f"Log saved to {log_path}")
 
     hdr("Opening Excel")
     os.startfile(str(EXCEL))
