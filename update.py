@@ -8,7 +8,7 @@ import os, sys, re, shutil, json, urllib.request
 from pathlib import Path
 from datetime import datetime
 
-VERSION    = "1.3"
+VERSION    = "1.4"
 UPDATE_URL = "https://gist.githubusercontent.com/claude-klein-finance/raw/update.py"
 BASE       = Path(__file__).parent
 MONTHLY    = BASE / "monthly"
@@ -330,6 +330,13 @@ def main():
     hdr("Updating Excel")
     wb = load_workbook(EXCEL, keep_vba=True)
     update_dashboard(wb, data)
+
+    # Debug: check what pension data looks like
+    pd_data = data.get("pension_dror", {})
+    print(f"  DEBUG dror pension dict: pension={pd_data.get('pension',0)}, provident={pd_data.get('provident',0)}")
+    products = pd_data.get("products", [])
+    for p in products[:5]:
+        print(f"    product: {p['product'][:30]} | total: {p['total']}")
 
     sheet_map = {
         "\u05e2\u05d5\u05e9":                     "bank",
