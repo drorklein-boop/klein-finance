@@ -226,8 +226,9 @@ def parse_all(found):
 
 def update_excel(data):
     hdr("Updating Excel")
-    # Excel already closed by VBA macro before script runs
-    time.sleep(1)
+    # Close Excel gracefully before writing
+    os.system("taskkill /f /im excel.exe 2>nul")
+    time.sleep(3)
     wb=load_workbook(EXCEL,keep_vba=True)
 
     # Update dashboard input cells
@@ -244,7 +245,7 @@ def update_excel(data):
     sc(18,4,data.get("bank",{}).get("balance",0),'\u05e2\u05d5"\u05e9')
     ws.cell(row=2,column=1).value=f"\u05e2\u05d3\u05db\u05d5\u05df \u05d0\u05d7\u05e8\u05d5\u05df: {datetime.now().strftime('%d/%m/%Y')}"
 
-    # Update RSU ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ write to ALIGN RSU sheet H13/H14
+    # Update RSU ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ write to ALIGN RSU sheet H13/H14
     rsu=data.get("rsu_image",{})
     avail=rsu.get("available",0); unves=rsu.get("unvested",0)
     if avail or unves:
@@ -268,7 +269,7 @@ def update_excel(data):
         ok(f"  Restored: {msheet}")
 
     # Transaction sheets are NOT replaced - they have Excel tables that break
-    # Dashboard reads pension from מסלקה sheets which are restored above
+    # Dashboard reads pension from ××¡××§× sheets which are restored above
     ok("  Sheet data preserved")
 
     wb.save(EXCEL)
