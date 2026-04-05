@@ -8,7 +8,7 @@ import os, sys, re, shutil, json, urllib.request
 from pathlib import Path
 from datetime import datetime
 
-VERSION    = "1.0"
+VERSION    = "1.1"
 UPDATE_URL = "https://gist.githubusercontent.com/claude-klein-finance/raw/update.py"
 BASE       = Path(__file__).parent
 MONTHLY    = BASE / "monthly"
