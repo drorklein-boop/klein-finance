@@ -8,7 +8,7 @@ import os, sys, re, shutil, json, urllib.request
 from pathlib import Path
 from datetime import datetime
 
-VERSION    = "1.9"
+VERSION    = "2.0"
 UPDATE_URL = "https://gist.githubusercontent.com/claude-klein-finance/raw/update.py"
 BASE       = Path(__file__).parent
 MONTHLY    = BASE / "monthly"
@@ -290,22 +290,20 @@ def update_dashboard(wb, data):
     set_cell(14, 4, invest, "\u05ea\u05d9\u05e7 \u05d4\u05e9\u05e7\u05e2\u05d5\u05ea")
     set_cell(18, 4, bank,   "\u05e2\u05d5\"\u05e9")
 
-    if True:
-        ws.cell(row=16,column=5).value=rsu.get("available",0)
+    ws.cell(row=16,column=5).value=rsu.get("available",0)
         updates.append(f"RSU Available: ${rsu['available']:,.0f}")
-    if True:
-        ws.cell(row=17,column=5).value=rsu.get("unvested",0)
+    ws.cell(row=17,column=5).value=rsu.get("unvested",0)
         updates.append(f"RSU Unvested: ${rsu['unvested']:,.0f}")
 
     ws.cell(row=2,column=1).value=f"\u05e2\u05d3\u05db\u05d5\u05df \u05d0\u05d7\u05e8\u05d5\u05df: {datetime.now().strftime('%d/%m/%Y')}"
     
-    # Also update ÃÂÃÂ¡ÃÂÃÂ§ÃÂ sheets with pension data
+    # Also update ÃÂÃÂÃÂÃÂ¡ÃÂÃÂÃÂÃÂ§ÃÂÃÂ sheets with pension data
     update_mislaka_sheet(wb, "\u05d3\u05e8\u05d5\u05e8 - \u05de\u05e1\u05dc\u05e7\u05d4", data.get("pension_dror", {}))
     update_mislaka_sheet(wb, "\u05dc\u05d9\u05d0\u05ea - \u05de\u05e1\u05dc\u05e7\u05d4", data.get("pension_liat", {}))
     for u in updates: ok(f"  {u}")
 
 def replace_sheet_data(wb, sheet_name, df):
-    """Only write cell values Ã¢ÂÂ never touch formatting or structure."""
+    """Only write cell values ÃÂ¢ÃÂÃÂ never touch formatting or structure."""
     if df is None or sheet_name not in wb.sheetnames: return
     ws = wb[sheet_name]
     for row in ws.iter_rows(min_row=1, max_row=ws.max_row):
