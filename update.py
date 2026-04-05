@@ -8,7 +8,7 @@ import os, sys, re, shutil, json, urllib.request
 from pathlib import Path
 from datetime import datetime
 
-VERSION    = "1.6"
+VERSION    = "1.7"
 UPDATE_URL = "https://gist.githubusercontent.com/claude-klein-finance/raw/update.py"
 BASE       = Path(__file__).parent
 MONTHLY    = BASE / "monthly"
@@ -209,20 +209,25 @@ def parse_rsu_image(path):
         import base64, json as _j
         with open(path,"rb") as f: b64=base64.b64encode(f.read()).decode()
         mime="image/png" if str(path).lower().endswith(".png") else "image/jpeg"
-        payload={"model":"claude-sonnet-4-20250514","max_tokens":100,
+        payload={"model":"claude-sonnet-4-20250514","max_tokens":200,
                  "messages":[{"role":"user","content":[
                      {"type":"image","source":{"type":"base64","media_type":mime,"data":b64}},
-                     {"type":"text","text":'From this RSU equity overview screenshot extract two numbers. Reply JSON only, no other text: {"unvested": 187148, "available": 170600}'}
+                     {"type":"text","text":"This is an RSU equity overview screenshot. Find the Unvested dollar amount and the Shares (or Vested) dollar amount. Also look for labels like Available, Vested, Shares. Reply with JSON only, no markdown, no explanation: {\"unvested\": 187148, \"available\": 170600}"}
                  ]}]}
         req=urllib.request.Request("https://api.anthropic.com/v1/messages",
             data=_j.dumps(payload).encode(),
             headers={"Content-Type":"application/json","anthropic-version":"2023-06-01"})
-        with urllib.request.urlopen(req,timeout=20) as r:
+        with urllib.request.urlopen(req,timeout=30) as r:
             res=_j.loads(r.read())
             text=res["content"][0]["text"].strip()
+            ok(f"  RSU API response: {text[:80]}")
             m=re.search(r'\{[^}]+\}',text)
-            if m: return _j.loads(m.group())
-    except: pass
+            if m:
+                parsed = _j.loads(m.group())
+                ok(f"  RSU parsed: {parsed}")
+                return parsed
+    except Exception as e:
+        warn(f"RSU API error: {e}")
     warn("RSU image could not be read. Enter manually:")
     try:
         u=float(input("    Unvested ($): ").replace(",","").replace("$","").strip())
