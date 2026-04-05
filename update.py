@@ -8,7 +8,7 @@ import os, sys, re, shutil, json, urllib.request
 from pathlib import Path
 from datetime import datetime
 
-VERSION    = "1.0"
+VERSION    = "1.3"
 UPDATE_URL = "https://gist.githubusercontent.com/claude-klein-finance/raw/update.py"
 BASE       = Path(__file__).parent
 MONTHLY    = BASE / "monthly"
@@ -250,6 +250,7 @@ def update_dashboard(wb, data):
     liat_p = data.get("pension_liat",{}).get("pension",0)
     dror_h = data.get("pension_dror",{}).get("provident",0)
     liat_h = data.get("pension_liat",{}).get("provident",0)
+    print(f"  DEBUG pension: dror_p={dror_p}, liat_p={liat_p}, dror_h={dror_h}, liat_h={liat_h}")
     invest = data.get("invest",{}).get("total",0)
     bank   = data.get("bank",{}).get("balance",0)
     rsu    = data.get("rsu_image",{})
