@@ -73,47 +73,56 @@ def find_files():
 
 def parse_pension(path):
     df = None
+    # Try HTML first (Mislaka files often HTML disguised as .xls)
     for enc in ["windows-1255", "utf-8", "iso-8859-8"]:
         try:
             tables = pd.read_html(str(path), encoding=enc)
-            if tables:
-                df = tables[0]
-                ok(f"  Pension read as HTML ({enc}), shape: {df.shape}")
-                break
-        except Exception as e:
-            pass
+            if tables: df = tables[0]; break
+        except: pass
+    # Fall back to Excel
     if df is None:
         for engine in ["xlrd", "openpyxl"]:
-            try:
-                df = pd.read_excel(path, header=None, engine=engine)
-                ok(f"  Pension read as Excel ({engine}), shape: {df.shape}")
-                break
-            except Exception as e:
-                warn(f"  Pension {engine} error: {e}")
-    if df is None:
-        warn(f"  Could not read pension file: {path.name}")
-        return {}
-    # Print first few rows for debugging
-    ok(f"  First rows: {df.head(3).values.tolist()}")
+            try: df = pd.read_excel(path, header=None, engine=engine); break
+            except: pass
+    if df is None: return {}
+
+    # Find column indices by scanning for Hebrew headers
+    product_col = total_col = -1
+    header_row = 0
+    for i, row in df.iterrows():
+        row_vals = [str(v) for v in row]
+        row_text = " ".join(row_vals)
+        # Look for the savings column header
+        if any(k in row_text for k in ["\u05e1\u05da \u05d4\u05db\u05dc", "\u05d7\u05d9\u05e1\u05db\u05d5\u05df"]):
+            header_row = i
+            for j, val in enumerate(row_vals):
+                if "\u05e9\u05dd \u05de\u05d5\u05e6\u05e8" in val or "\u05de\u05d5\u05e6\u05e8" in val:
+                    product_col = j
+                if "\u05e1\u05da \u05d4\u05db\u05dc" in val or ("\u05d7\u05d9\u05e1\u05db\u05d5\u05df" in val and "\u05e6\u05e4\u05d5\u05d9" not in val):
+                    total_col = j
+            break
+
+    if product_col == -1: product_col = 0
+    if total_col == -1: total_col = 4
+
+    ok(f"  Pension columns: product={product_col}, total={total_col}, header_row={header_row}")
+
     pension = provident = 0
     products_list = []
-    for _, row in df.iterrows():
+    for i, row in df.iterrows():
+        if i <= header_row: continue
         row = list(row)
-        if not row[0] or str(row[0]) == "nan": continue
-        t = 0
-        for col in [4, 3, 5, 2]:
-            if len(row) > col:
-                v = num(str(row[col]))
-                if 1000 < v < 10000000: t = v; break
-        if t == 0: continue
-        name = str(row[0])
+        if len(row) <= max(product_col, total_col): continue
+        name = str(row[product_col])
+        if not name or name == "nan": continue
+        t = num(str(row[total_col]))
+        if t == 0 or t < 100: continue
         products_list.append({"product": name, "total": t})
-        ok(f"    product: {name[:30]} | total: {t}")
-        if "\u05e4\u05e0\u05e1\u05d9\u05d4" in name: pension += t; ok(f"    -> pension +{t}")
-        elif "\u05d4\u05e9\u05ea\u05dc\u05de\u05d5\u05ea" in name or "\u05e7\u05e8\u05df" in name: provident += t; ok(f"    -> provident +{t}")
-        else: ok(f"    -> NOT matched (no category)")
-    ok(f"  TOTAL: pension={pension}, provident={provident}")
+        if "\u05e4\u05e0\u05e1\u05d9\u05d4" in name: pension += t
+        elif "\u05d4\u05e9\u05ea\u05dc\u05de\u05d5\u05ea" in name or "\u05e7\u05e8\u05df" in name: provident += t
+    ok(f"  pension={pension:,.0f}, provident={provident:,.0f}")
     return {"pension": pension, "provident": provident, "products": products_list}
+
 
 def parse_bank(path):
     engine = "xlrd" if str(path).endswith(".xls") else "openpyxl"
@@ -210,9 +219,9 @@ def update_excel_xlwings(values):
         dror_products = values.get("dror_products", [])
         liat_products = values.get("liat_products", [])
         if dror_products:
-            update_pension_table(wb, "Tbl_ÃÂÃÂÃÂÃÂ¡ÃÂÃÂÃÂÃÂ§ÃÂÃÂ_ÃÂÃÂÃÂÃÂ¨ÃÂÃÂÃÂÃÂ¨", "ÃÂÃÂÃÂÃÂ¨ÃÂÃÂÃÂÃÂ¨ - ÃÂÃÂÃÂÃÂ¡ÃÂÃÂÃÂÃÂ§ÃÂÃÂ", dror_products)
+            update_pension_table(wb, "Tbl_ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¡ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ§ÃÂÃÂÃÂÃÂ_ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¨ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¨", "ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¨ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¨ - ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¡ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ§ÃÂÃÂÃÂÃÂ", dror_products)
         if liat_products:
-            update_pension_table(wb, "Tbl_ÃÂÃÂÃÂÃÂ¡ÃÂÃÂÃÂÃÂ§ÃÂÃÂ_ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂª", "ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂª - ÃÂÃÂÃÂÃÂ¡ÃÂÃÂÃÂÃÂ§ÃÂÃÂ", liat_products)
+            update_pension_table(wb, "Tbl_ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¡ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ§ÃÂÃÂÃÂÃÂ_ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂª", "ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂª - ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¡ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ§ÃÂÃÂÃÂÃÂ", liat_products)
 
         rsu_avail = values.get("rsu_available", 0)
         rsu_unves = values.get("rsu_unvested", 0)
