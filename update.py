@@ -8,7 +8,7 @@ import os, sys, re, shutil, json, urllib.request
 from pathlib import Path
 from datetime import datetime
 
-VERSION    = "1.1"
+VERSION    = "1.0"
 UPDATE_URL = "https://gist.githubusercontent.com/claude-klein-finance/raw/update.py"
 BASE       = Path(__file__).parent
 MONTHLY    = BASE / "monthly"
@@ -147,24 +147,39 @@ def parse_isracard(path):
     return {"transactions":txs,"by_category":bc,"total":sum(bc.values()),"raw_df":df}
 
 def parse_pension(path):
-    engine = "xlrd" if str(path).endswith(".xls") else "openpyxl"
-    df = pd.read_excel(path, header=None, engine=engine)
-    products=[]
-    for i,row in df.iterrows():
-        if i==0: continue
-        row=list(row)
-        if not row[0] or str(row[0])=="nan": continue
-        t=num(row[4]) if len(row)>4 else 0
-        if t==0: continue
-        products.append({
-            "product": str(row[0]),
-            "total":   t,
-            "fee_deposit": num(row[11]) if len(row)>11 else 0,
-            "fee_accum":   num(row[12]) if len(row)>12 else 0,
-            "return_ytd":  num(row[13]) if len(row)>13 else 0,
-        })
-    pension_total    = sum(p["total"] for p in products if "\u05e4\u05e0\u05e1\u05d9\u05d4" in p["product"])
-    provident_total  = sum(p["total"] for p in products if "\u05d4\u05e9\u05ea\u05dc\u05de\u05d5\u05ea" in p["product"])
+    df = None
+    for engine in ["xlrd", "openpyxl"]:
+        try:
+            df = pd.read_excel(path, header=None, engine=engine)
+            break
+        except: pass
+    if df is None:
+        df = read_html_xls(path)
+    if df is None:
+        return {}
+    products = []
+    for i, row in df.iterrows():
+        if i == 0: continue
+        row = list(row)
+        if not row[0] or str(row[0]) == "nan": continue
+        product_name = str(row[0])
+        t = num(row[4]) if len(row) > 4 else 0
+        if t == 0:
+            for v in row[2:8]:
+                candidate = num(str(v))
+                if 1000 < candidate < 10000000:
+                    t = candidate; break
+        if t == 0: continue
+        products.append({"product": product_name, "total": t,
+            "fee_deposit": num(row[11]) if len(row) > 11 else 0,
+            "fee_accum":   num(row[12]) if len(row) > 12 else 0,
+            "return_ytd":  num(row[13]) if len(row) > 13 else 0})
+    pension_kw   = ["\u05e4\u05e0\u05e1\u05d9\u05d4"]
+    provident_kw = ["\u05d4\u05e9\u05ea\u05dc\u05de\u05d5\u05ea", "\u05e7\u05e8\u05df \u05d4\u05e9\u05ea\u05dc\u05de\u05d5\u05ea"]
+    pension_total   = sum(p["total"] for p in products if any(k in p["product"] for k in pension_kw))
+    provident_total = sum(p["total"] for p in products if any(k in p["product"] for k in provident_kw))
+    if pension_total == 0 and provident_total == 0:
+        pension_total = sum(p["total"] for p in products)
     return {"pension": pension_total, "provident": provident_total, "products": products, "raw_df": df}
 
 def parse_invest(path):
