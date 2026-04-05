@@ -245,7 +245,7 @@ def update_excel(data):
     sc(18,4,data.get("bank",{}).get("balance",0),'\u05e2\u05d5"\u05e9')
     ws.cell(row=2,column=1).value=f"\u05e2\u05d3\u05db\u05d5\u05df \u05d0\u05d7\u05e8\u05d5\u05df: {datetime.now().strftime('%d/%m/%Y')}"
 
-    # Update RSU â write to ALIGN RSU sheet H13/H14
+    # Update RSU Ã¢ÂÂ write to ALIGN RSU sheet H13/H14
     rsu=data.get("rsu_image",{})
     avail=rsu.get("available",0); unves=rsu.get("unvested",0)
     if avail or unves:
@@ -255,7 +255,18 @@ def update_excel(data):
             rws.cell(row=14,column=8).value=unves
             ok(f"  RSU: available={avail}, unvested={unves}")
 
-    # Mislaka sheets NOT updated - they have formulas dashboard reads from
+    for msheet, mkey in [("\u05d3\u05e8\u05d5\u05e8 - \u05de\u05e1\u05dc\u05e7\u05d4","pension_dror"),("\u05dc\u05d9\u05d0\u05ea - \u05de\u05e1\u05dc\u05e7\u05d4","pension_liat")]:
+        raw=data.get(mkey,{}).get("raw_df")
+        if raw is None or msheet not in wb.sheetnames: continue
+        mws=wb[msheet]
+        for row in mws.iter_rows(min_row=1,max_row=mws.max_row):
+            for cell in row: cell.value=None
+        for r,row in enumerate(raw.values,1):
+            for c,val in enumerate(row,1):
+                if val is not None and str(val)!="nan":
+                    try: mws.cell(row=r,column=c).value=val
+                    except: pass
+        ok(f"  Restored: {msheet}")
 
     # Update transaction sheets
     for sheet,key in {
