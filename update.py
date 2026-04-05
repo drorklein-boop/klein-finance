@@ -8,11 +8,17 @@ import os, sys, re, shutil, json, urllib.request
 from pathlib import Path
 from datetime import datetime
 
-VERSION    = "1.6"
+VERSION    = "1.8"
 UPDATE_URL = "https://gist.githubusercontent.com/claude-klein-finance/raw/update.py"
 BASE       = Path(__file__).parent
 MONTHLY    = BASE / "monthly"
 BACKUPS    = BASE / "backups"
+# Load Anthropic API key from local file (never stored in GitHub)
+ANTHROPIC_KEY = ""
+_key_file = BASE / "api_key.txt"
+if _key_file.exists():
+    ANTHROPIC_KEY = _key_file.read_text(encoding="utf-8").strip()
+
 EXCEL      = BASE / "\u05de\u05d0\u05d6\u05df_\u05e7\u05dc\u05d9\u05d9\u05df.xlsm"
 
 missing = []
@@ -293,13 +299,13 @@ def update_dashboard(wb, data):
 
     ws.cell(row=2,column=1).value=f"\u05e2\u05d3\u05db\u05d5\u05df \u05d0\u05d7\u05e8\u05d5\u05df: {datetime.now().strftime('%d/%m/%Y')}"
     
-    # Also update מסלקה sheets with pension data
+    # Also update ××¡××§× sheets with pension data
     update_mislaka_sheet(wb, "\u05d3\u05e8\u05d5\u05e8 - \u05de\u05e1\u05dc\u05e7\u05d4", data.get("pension_dror", {}))
     update_mislaka_sheet(wb, "\u05dc\u05d9\u05d0\u05ea - \u05de\u05e1\u05dc\u05e7\u05d4", data.get("pension_liat", {}))
     for u in updates: ok(f"  {u}")
 
 def replace_sheet_data(wb, sheet_name, df):
-    """Only write cell values — never touch formatting or structure."""
+    """Only write cell values â never touch formatting or structure."""
     if df is None or sheet_name not in wb.sheetnames: return
     ws = wb[sheet_name]
     for row in ws.iter_rows(min_row=1, max_row=ws.max_row):
