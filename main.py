@@ -60,7 +60,7 @@ def detect_type(path):
         if "\u05ea\u05d0\u05e8\u05d9\u05da \u05e2\u05e1\u05e7\u05d4" in text and "\u05e1\u05d5\u05d2 \u05e2\u05e1\u05e7\u05d4" in text: return "credit"
         if "\u05e9\u05dd \u05d4\u05e0\u05d9\u05d9\u05e8" in text or "\u05de\u05d1\u05d8 \u05d0\u05d9\u05e9\u05d9" in text: return "invest"
 
-        # Pension: check if file has the ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¤ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¨ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¦ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¨ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ©ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ sheet
+        # Pension: check if file has the ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¤ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¨ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¦ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¨ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ©ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ sheet
         xl = pd.ExcelFile(path, engine=engine)
         if "\u05e4\u05e8\u05d8\u05d9 \u05d4\u05de\u05d5\u05e6\u05e8\u05d9\u05dd \u05e9\u05dc\u05d9" in xl.sheet_names:
             # Determine Dror vs Liat by row count in the pension sheet
@@ -166,7 +166,7 @@ def parse_rsu(path):
     except: return {}
 
 
-def update_excel_xlwings(values):
+def update_excel_xlwings(values, found):
     hdr("Updating Excel with xlwings")
     try:
         app = xw.apps.active
@@ -203,12 +203,106 @@ def update_excel_xlwings(values):
 
         dash["A2"].value = f"\u05e2\u05d3\u05db\u05d5\u05df \u05d0\u05d7\u05e8\u05d5\u05df: {datetime.now().strftime('%d/%m/%Y')}"
         wb.save()
+        # Update transaction sheets
+        hdr("Updating transaction sheets")
+        if found.get("credit"): update_max_sheets(wb, found["credit"])
+        if found.get("bank"): update_bank_sheet(wb, found["bank"])
+        if found.get("isracard"): update_isracard_sheet(wb, found["isracard"])
+        # Force recalculation for graphs
+        wb.app.calculate()
         ok("Excel saved - button and macro preserved!")
         save_history_snapshot(wb)
         return True
     except Exception as e:
         warn(f"xlwings error: {e}")
         return False
+
+def update_max_sheets(wb, credit_path):
+    """Replace MAX credit card sheets with downloaded data."""
+    for sname in ["\u05e2\u05e1\u05e7\u05d0\u05d5\u05ea \u05d1\u05de\u05d5\u05e2\u05d3 \u05d4\u05d7\u05d9\u05d5\u05d1", '\u05e2\u05e1\u05e7\u05d0\u05d5\u05ea \u05d7\u05d5"\u05dc \u05d5\u05de\u05d8"\u05d7']:
+        try:
+            df = pd.read_excel(credit_path, sheet_name=sname, header=None, engine='openpyxl')
+            ws = wb.sheets[sname]
+            ws.clear_contents()
+            for r, row in enumerate(df.values.tolist(), start=1):
+                for c, val in enumerate(row, start=1):
+                    if val is not None and str(val) != 'nan':
+                        ws.cells(r, c).value = val
+            ok(f"  Updated {sname}: {len(df)} rows")
+        except Exception as e:
+            warn(f"  MAX error ({sname}): {e}")
+
+
+def update_bank_sheet(wb, bank_path):
+    """Replace raw data in cols A-E, preserve and extend formulas in cols F-I."""
+    import re as re2
+    try:
+        df = pd.read_excel(bank_path, sheet_name='\u05e2\u05d5\u05e9', header=None, engine='openpyxl')
+        ws = wb.sheets['\u05e2\u05d5\u05e9']
+        # Get formula templates from row 3
+        templates = {}
+        for col in [6, 7, 8, 9]:
+            f = ws.cells(3, col).formula
+            if f: templates[col] = f
+        # Data starts at row index 2 (skip 2 header rows)
+        data = df.iloc[2:].values.tolist()
+        # Clear rows 3+ all cols
+        used = ws.api.UsedRange.Rows.Count
+        if used >= 3:
+            ws.range(ws.cells(3, 1), ws.cells(used + 10, 9)).clear_contents()
+        # Write data to cols A-E
+        for r_idx, row in enumerate(data, start=3):
+            for c_idx, val in enumerate(row[:5], start=1):
+                if val is not None and str(val) != 'nan':
+                    ws.cells(r_idx, c_idx).value = val
+        # Extend formulas F-I
+        for r_idx in range(3, 3 + len(data)):
+            for col, tmpl in templates.items():
+                new_f = re2.sub(r'([A-Z]+)3(?=[^0-9]|$)', lambda m: m.group(1) + str(r_idx), tmpl)
+                ws.cells(r_idx, col).formula = new_f
+        ok(f"  Updated \u05e2\u05d5\u05e9: {len(data)} rows")
+    except Exception as e:
+        warn(f"  \u05e2\u05d5\u05e9 error: {e}")
+
+
+def update_isracard_sheet(wb, isr_path):
+    """Replace Isracard data cols A-H, preserve and extend col I category formula."""
+    import re as re2
+    try:
+        df = pd.read_excel(isr_path, sheet_name='\u05e4\u05d9\u05e8\u05d5\u05d8 \u05e2\u05e1\u05e7\u05d0\u05d5\u05ea', header=None, engine='openpyxl')
+        ws = wb.sheets['\u05d0\u05d9\u05e9\u05e8\u05d0\u05db\u05e8\u05d8']
+        # Get category formula template from row 2
+        cat_formula = ws.cells(2, 9).formula or ws.cells(2, 9).formula_array
+        # Find data start row in downloaded file
+        data_start = 0
+        for i, row in df.iterrows():
+            if '\u05ea\u05d0\u05e8\u05d9\u05da \u05e8\u05db\u05d9\u05e9\u05d4' in str(list(row)):
+                data_start = i + 1; break
+        # Collect valid data rows (date pattern DD.MM.YY)
+        data_rows = []
+        for i in range(data_start, len(df)):
+            row = list(df.iloc[i])
+            first = str(row[0])
+            if any(x in first for x in ['\u05e1\u05d4"\u05db', '\u05ea\u05e0\u05d0\u05d9\u05dd']) or first.strip() in ('', 'nan'): continue
+            if re2.match(r'\d{2}\.\d{2}\.\d{2}', first): data_rows.append(row)
+        # Clear rows 2+ all cols
+        used = ws.api.UsedRange.Rows.Count
+        if used >= 2:
+            ws.range(ws.cells(2, 1), ws.cells(used + 5, 9)).clear_contents()
+        # Write data cols A-H
+        for r_idx, row in enumerate(data_rows, start=2):
+            for c_idx, val in enumerate(row[:8], start=1):
+                if val is not None and str(val) != 'nan':
+                    ws.cells(r_idx, c_idx).value = val
+        # Extend category formula col I
+        if cat_formula:
+            for r_idx in range(2, 2 + len(data_rows)):
+                new_f = re2.sub(r'([A-Z]+)2(?=[^0-9]|$)', lambda m: m.group(1) + str(r_idx), cat_formula)
+                ws.cells(r_idx, 9).formula = new_f
+        ok(f"  Updated \u05d0\u05d9\u05e9\u05e8\u05d0\u05db\u05e8\u05d8: {len(data_rows)} rows")
+    except Exception as e:
+        warn(f"  \u05d0\u05d9\u05e9\u05e8\u05d0\u05db\u05e8\u05d8 error: {e}")
+
 
 def save_history_snapshot(wb):
     hdr("Saving history snapshot")
@@ -278,7 +372,7 @@ def main():
         "rsu_unvested":   rsu.get("unvested", 0),
     }
 
-    success = update_excel_xlwings(values)
+    success = update_excel_xlwings(values, found)
     if success:
         print(f"\n{G}  Done! Excel updated. Button and macro preserved.{X}\n")
     else:
