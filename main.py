@@ -242,28 +242,30 @@ def update_excel_xlwings(values, found):
             from pathlib import Path as _P2
             _m2 = _P2(r'C:\KleinFinance\monthly')
             _fs2 = sorted(_m2.glob('*'), key=lambda x: x.stat().st_mtime, reverse=True)
-            for _f2 in _fs2:
-                _n2 = _f2.name
-                if '\u05e8\u05d9\u05db\u05d5\u05d6' in _n2 and '\u05d9\u05ea\u05e8\u05d5\u05ea' in _n2:
-                    write_rikhuz_yitarot(wb, str(_f2))
-                    break
-            for _f2 in _fs2:
-                if '\u05d0\u05d7\u05d6\u05e7\u05d5\u05ea' in _f2.name:
-                    write_tik_hashkaot(wb, str(_f2))
-                    break
-            _dd, _ll = False, False
-            for _f2 in _fs2:
-                _n2 = _f2.name
-                if '\u05d4\u05ea\u05de\u05d5\u05e0\u05d4' in _n2 and '(10)' in _n2 and not _dd:
-                    write_maskleka(wb, str(_f2), '\u05d3\u05e8\u05d5\u05e8 - \u05de\u05e1\u05dc\u05e7\u05d4')
-                    _dd = True
-                elif '\u05d4\u05ea\u05de\u05d5\u05e0\u05d4' in _n2 and '(11)' in _n2 and not _ll:
-                    write_maskleka(wb, str(_f2), '\u05dc\u05d9\u05d0\u05ea - \u05de\u05e1\u05dc\u05e7\u05d4')
-                    _ll = True
-                if _dd and _ll:
-                    break
-        except Exception as _e2:
-            warn('detail sheets error: ' + str(_e2))
+        except Exception as _ep:
+            warn(f'detail sheets: cannot scan monthly folder: {_ep}')
+            _fs2 = []
+        for _f2 in _fs2:
+            if 'ריכוז' in _f2.name and 'יתרות' in _f2.name:
+                try: write_rikhuz_yitarot(wb, _f2)
+                except Exception as _e: warn(f'rikhuz yitarot: {_e}')
+                break
+        for _f2 in _fs2:
+            if 'אחזקות' in _f2.name:
+                try: write_tik_hashkaot(wb, _f2)
+                except Exception as _e: warn(f'tik hashkaot: {_e}')
+                break
+        _dd, _ll = False, False
+        for _f2 in _fs2:
+            if 'התמונה' in _f2.name and '(10)' in _f2.name and not _dd:
+                try: write_maskleka(wb, _f2, 'דרור - מסלקה')
+                except Exception as _e: warn(f'dror maskleka: {_e}')
+                _dd = True
+            elif 'התמונה' in _f2.name and '(11)' in _f2.name and not _ll:
+                try: write_maskleka(wb, _f2, 'ליאת - מסלקה')
+                except Exception as _e: warn(f'liat maskleka: {_e}')
+                _ll = True
+            if _dd and _ll: break
         save_history_snapshot(wb)
         return True
     except Exception as e:
@@ -440,48 +442,43 @@ def _sheet_to_2d(path, sheet_name):
 
 
 def write_rikhuz_yitarot(wb, path):
-    """Copy the \u05e8\u05d9\u05db\u05d5\u05d6 \u05d9\u05ea\u05e8\u05d5\u05ea summary table wholesale into the destination sheet."""
+    """Copy ריכוז יתרות summary table into Excel sheet. Auto-installs html5lib if needed."""
+    import subprocess, sys
+    for _pkg in ["html5lib", "lxml"]:
+        try:
+            __import__(_pkg)
+        except ImportError:
+            subprocess.run([sys.executable, "-m", "pip", "install", _pkg, "-q"], capture_output=True)
     import pandas as pd
     try:
-        import lxml
-    except ImportError:
-        import subprocess as _sp, sys as _sys
-        _sp.run([_sys.executable, '-m', 'pip', 'install', 'lxml', '-q'], capture_output=True)
-    try:
-        tables = pd.read_html(path, encoding='utf-8', flavor='lxml')
+        tables = pd.read_html(str(path), encoding="utf-8")
     except Exception:
         try:
-            tables = pd.read_html(path, encoding='windows-1255', flavor='lxml')
-        except Exception:
-            tables = pd.read_html(path, encoding='utf-8')
-
-    # Find the summary table (3 cols, contains \u05e2\u05d5\u05d1\u05e8 \u05d5\u05e9\u05d1)
+            tables = pd.read_html(str(path), encoding="windows-1255")
+        except Exception as e:
+            warn(f"  ריכוז יתרות: cannot parse file: {e}")
+            return
     target = None
     for t in tables:
-        if t.shape[1] == 3 and any('\u05e2\u05d5\u05d1\u05e8' in str(v) for v in t.iloc[:, 0].values):
+        if t.shape[1] == 3 and any("עובר" in str(v) for v in t.iloc[:, 0].values):
             target = t
             break
     if target is None:
-        warn('\u05e8\u05d9\u05db\u05d5\u05d6 \u05d9\u05ea\u05e8\u05d5\u05ea: summary table not found')
+        warn("  ריכוז יתרות: summary table not found")
         return
-
-    # Build 2D list: header row + data rows
     rows_2d = [list(target.columns)] + [list(r) for r in target.values.tolist()]
-
-    # Also find mortgage row and append
     for t in tables:
-        if t.shape[0] == 1 and '\u05de\u05e9\u05db\u05e0\u05ea\u05d0\u05d5\u05ea' in str(t.values) and t.shape[1] >= 3:
-            rows_2d.append(['\u05de\u05e9\u05db\u05e0\u05ea\u05d0\u05d5\u05ea', str(t.iloc[0, 1]), str(t.iloc[0, 2])])
+        if t.shape[0] == 1 and "משכנתאות" in str(t.values) and t.shape[1] >= 3:
+            rows_2d.append(["משכנתאות", str(t.iloc[0,1]), str(t.iloc[0,2])])
             break
-
     try:
-        ws = wb.sheets['\u05e8\u05d9\u05db\u05d5\u05d6 \u05d9\u05ea\u05e8\u05d5\u05ea \u05dc\u05d0\u05d5\u05de\u05d9']
+        ws = wb.sheets["ריכוז יתרות לאומי"]
         ws.clear_contents()
-        ws['A1'].value = rows_2d
+        ws["A1"].value = rows_2d
         wb.save()
-        ok(f'\u05e8\u05d9\u05db\u05d5\u05d6 \u05d9\u05ea\u05e8\u05d5\u05ea \u05dc\u05d0\u05d5\u05de\u05d9: {len(rows_2d)} rows')
+        ok(f"ריכוז יתרות לאומי: {len(rows_2d)} rows")
     except Exception as e:
-        warn(f'\u05e8\u05d9\u05db\u05d5\u05d6 \u05d9\u05ea\u05e8\u05d5\u05ea sheet error: {e}')
+        warn(f"  ריכוז יתרות sheet write error: {e}")
 
 
 def write_tik_hashkaot(wb, path):
