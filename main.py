@@ -1,6 +1,5 @@
-# Klein Finance - Monthly Sheet Updater v7.0
-# Reads files from MONTHLY folder, copies data into open Excel workbook
-import sys, os
+# Klein Finance - Monthly Sheet Updater v7.1
+import sys, os, shutil, datetime
 from pathlib import Path
 from collections import defaultdict
 
@@ -9,6 +8,7 @@ MONTHLY = BASE / "MONTHLY"
 
 def detect_type(fname):
     name = fname.lower()
+    if fname.startswith('~'): return None
     if 'transaction-details' in name: return 'credit'
     if 'עוש' in name or 'לאומי' in name: return 'bank'
     if 'אחזקות' in name: return 'invest'
@@ -17,6 +17,13 @@ def detect_type(fname):
     if '5647' in name or 'אישראכרט' in name: return 'isracard'
     if 'ריכוז' in name and 'יתרות' in name: return 'balance'
     return None
+
+def clean_val(val):
+    if isinstance(val, str):
+        val = val.replace('\u200e','').replace('\u200f','').strip()
+        try: return float(val.replace(',',''))
+        except: return val if val else None
+    return val
 
 def read_xlsx_sheet(path, sheet_name):
     import openpyxl
@@ -31,6 +38,20 @@ def read_xls_sheet(path, sheet_name):
     wb = xlrd.open_workbook(path)
     ws = wb.sheet_by_name(sheet_name)
     return [[ws.cell(r,c).value for c in range(ws.ncols)] for r in range(ws.nrows)]
+
+def read_balance_clean(path):
+    import openpyxl
+    wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    ws = wb[wb.sheetnames[0]]
+    all_rows = list(ws.iter_rows(values_only=True))
+    wb.close()
+    data = []
+    for row in all_rows:
+        vals = [clean_val(v) for v in row[:4]]
+        if not any(v is not None for v in vals): continue
+        if isinstance(vals[0], str) and len(vals[0]) > 60: continue
+        data.append(vals)
+    return data
 
 def collect_files():
     typed = defaultdict(list)
@@ -54,7 +75,7 @@ def read_file(ftype, fpath):
         for sname in wb.sheetnames:
             sheets[sname] = [list(row) for row in wb[sname].iter_rows(values_only=True)]
         wb.close()
-        return sheets  # dict of sheet_name -> data
+        return sheets
 
     elif ftype == 'bank' and is_xlsx:
         return {'עוש': read_xlsx_sheet(fpath, 'עוש')}
@@ -87,12 +108,7 @@ def read_file(ftype, fpath):
         return {'אישראכרט': data}
 
     elif ftype == 'balance' and is_xlsx:
-        import openpyxl
-        wb = openpyxl.load_workbook(fpath, read_only=True, data_only=True)
-        sname = wb.sheetnames[0]
-        data = [list(row) for row in wb[sname].iter_rows(values_only=True)]
-        wb.close()
-        return {'ריכוז יתרות לאומי': data}
+        return {'ריכוז יתרות לאומי': read_balance_clean(fpath)}
 
     return {}
 
@@ -107,13 +123,12 @@ def write_sheet(xw_wb, target_name, data):
         xw_wb.app.screen_updating = True
 
 def main():
-    print("\n  Klein Finance - Monthly Update v7.0")
+    print("\n  Klein Finance - Monthly Update v7.1")
     print("  =====================================")
 
     try:
         import xlwings as xw
     except ImportError:
-        print("  Installing xlwings...")
         import subprocess
         subprocess.run([sys.executable, '-m', 'pip', 'install', 'xlwings', '--quiet'], check=True)
         import xlwings as xw
@@ -124,10 +139,9 @@ def main():
         import subprocess
         subprocess.run([sys.executable, '-m', 'pip', 'install', 'openpyxl', 'xlrd', '--quiet'], check=True)
 
-    # Find open workbook
     app = xw.apps.active
     if not app:
-        print("  ERROR: Excel is not open. Please open מאזן_קליין.xlsm first.")
+        print("  ERROR: Excel is not open.")
         input("\n  Press Enter to close...")
         return
 
@@ -144,35 +158,31 @@ def main():
 
     print(f"  Workbook: {wb.name}")
 
-    # Backup
-    import shutil, datetime
     backup_dir = BASE / "backups"
     backup_dir.mkdir(exist_ok=True)
     ts = datetime.datetime.now().strftime("%Y-%m-%d_%H%M")
     src = BASE / "מאזן_קליין.xlsm"
     if src.exists():
         shutil.copy2(src, backup_dir / f"מאזן_{ts}.xlsm")
-        print(f"  Backup: מאזן_{ts}.xlsm")
+        print(f"  Backup saved")
 
-    # Collect and process files
     typed = collect_files()
     if not typed:
         print("\n  No recognized files found in MONTHLY folder.")
         input("\n  Press Enter to close...")
         return
 
-    print(f"\n  Found {sum(len(v) for v in typed.values())} file(s) in MONTHLY:")
+    print(f"\n  Processing {sum(len(v) for v in typed.values())} file(s)...")
     results = []
+    target_sheet_names = [s.name for s in wb.sheets]
 
     for ftype, files in typed.items():
         fpath = files[0]
-        print(f"  - {fpath.name}")
         try:
             sheets_data = read_file(ftype, fpath)
             for target_name, data in sheets_data.items():
-                target_sheet_names = [s.name for s in wb.sheets]
                 if target_name not in target_sheet_names:
-                    results.append(f"  SKIP  {target_name} (sheet not found in workbook)")
+                    results.append(f"  SKIP  '{target_name}' not found in workbook")
                     continue
                 write_sheet(wb, target_name, data)
                 results.append(f"  OK    {target_name} ({len(data)} rows)")
@@ -184,8 +194,7 @@ def main():
     print("\n  Results:")
     for r in results:
         print(r)
-
-    print("\n  Done - workbook saved.")
+    print("\n  Done.")
     input("\n  Press Enter to close...")
 
 if __name__ == '__main__':
