@@ -271,117 +271,56 @@ def update_excel_xlwings(values, found):
         return False
 
 def update_max_sheets(wb, credit_path):
-    """Replace MAX sheets - pandas read + single range write."""
-    import re as re2
-    for sname in ["\u05e2\u05e1\u05e7\u05d0\u05d5\u05ea \u05d1\u05de\u05d5\u05e2\u05d3 \u05d4\u05d7\u05d9\u05d5\u05d1", '\u05e2\u05e1\u05e7\u05d0\u05d5\u05ea \u05d7\u05d5"\u05dc \u05d5\u05de\u05d8"\u05d7']:
-        try:
-            df = pd.read_excel(credit_path, sheet_name=sname, header=None, engine='openpyxl')
-            rows_out = []
-            data_count = 0
-            for r_idx, row in enumerate(df.values.tolist()):
-                first = str(row[0]) if row[0] is not None else ''
-                if r_idx < 4 or bool(re2.match(r'\d{2}-\d{2}-\d{4}', first)):
-                    rows_out.append([None if (v is None or str(v)=='nan') else v for v in row])
-                    if r_idx >= 4: data_count += 1
-            ws = wb.sheets[sname]
-            ws.clear_contents()
-            if rows_out:
-                ws['A1'].value = rows_out
-            ok(f"  Updated {sname}: {data_count} rows")
-        except Exception as e:
-            warn(f"  MAX error ({sname}): {e}")
-def update_bank_sheet(wb, bank_path):
-    """Replace raw data in cols A-E, preserve and extend formulas in cols F-I."""
-    import re as re2
+    """Copy both sheets from transaction-details file wholesale into Excel."""
+    import openpyxl
     try:
-        df = pd.read_excel(bank_path, sheet_name='\u05e2\u05d5\u05e9', header=None, engine='openpyxl')
-        ws = wb.sheets['\u05e2\u05d5\u05e9']
-        # Get formula templates from row 3
-        templates = {}
-        for col in [6, 7, 8, 9]:
-            f = ws.cells(3, col).formula
-            if f: templates[col] = f
-        # Data starts at row index 2 (skip 2 header rows)
-        data = df.iloc[2:].values.tolist()
-        # Clear rows 3+ all cols
-        used = ws.api.UsedRange.Rows.Count
-        if used >= 3:
-            ws.range(ws.cells(3, 1), ws.cells(used + 10, 9)).clear_contents()
-        # Write cols A-E as one range operation
-        clean_data = []
-        for row in data:
-            clean = [None if (v is None or str(v)=='nan') else v for v in row[:5]]
-            clean_data.append(clean)
-        if clean_data:
-            ws.range('A3').value = clean_data
-        # Extend formulas F-I to cover all new rows
-        # Templates from row 3 - adjust row references for each row
-        import re as re2
-        templates = {
-            6: ws.cells(3, 6).formula,
-            7: ws.cells(3, 7).formula,
-            8: ws.cells(3, 8).formula,
-            9: ws.cells(3, 9).formula,
-        }
-        last_formula_row = 3
-        for col in [6,7,8,9]:
-            for r in range(4, 3 + len(clean_data) + 1):
-                if not ws.cells(r, col).formula:
-                    last_formula_row = r; break
-            else:
-                last_formula_row = 3 + len(clean_data)
-        if last_formula_row > 3:
-            for col, tmpl in templates.items():
-                if not tmpl: continue
-                formulas = []
-                for r_idx in range(last_formula_row, 3 + len(clean_data)):
-                    new_f = re2.sub(r'([A-Z])3(?=[^0-9]|$)', lambda m, r=r_idx: m.group(1) + str(r), tmpl)
-                    formulas.append([new_f])
-                if formulas:
-                    ws.range(ws.cells(last_formula_row, col), ws.cells(2 + len(clean_data), col)).formula = formulas
-        ok(f"  \u05e2\u05d5\u05e9: {len(clean_data)} rows, formulas extended to row {2 + len(clean_data)}")
-        ok(f"  Updated \u05e2\u05d5\u05e9: {len(data)} rows")
+        src = openpyxl.load_workbook(credit_path, data_only=True)
     except Exception as e:
-        warn(f"  \u05e2\u05d5\u05e9 error: {e}")
+        warn(f'update_max_sheets: cannot open {credit_path}: {e}')
+        return
+    for src_name, dest_name in [
+        ('עסקאות במועד החיוב', 'עסקאות במועד החיוב'),
+        ('עסקאות חו"ל ומט"ח', 'עסקאות חו"ל ומט"ח'),
+    ]:
+        if src_name not in src.sheetnames:
+            warn(f'Sheet not found in source: {src_name}')
+            continue
+        rows_2d = [list(row) for row in src[src_name].iter_rows(values_only=True)]
+        try:
+            ws = wb.sheets[dest_name]
+            ws.clear_contents()
+            ws['A1'].value = rows_2d
+            wb.save()
+            ok(f'{dest_name}: {len(rows_2d)} rows')
+        except Exception as e:
+            warn(f'{dest_name} sheet error: {e}')
+
+
+def update_bank_sheet(wb, bank_path):
+    """Copy the עוש sheet from Leumi bank file wholesale into Excel."""
+    rows_2d = _sheet_to_2d(bank_path, 'עוש')
+    try:
+        ws = wb.sheets['עוש']
+        ws.clear_contents()
+        ws['A1'].value = rows_2d
+        wb.save()
+        ok(f'עוש: {len(rows_2d)} rows')
+    except Exception as e:
+        warn(f'עוש sheet error: {e}')
 
 
 def update_isracard_sheet(wb, isr_path):
-    """Replace Isracard data cols A-H, preserve and extend col I category formula."""
-    import re as re2
+    """Copy the פירוט עסקאות sheet from Isracard file wholesale into Excel."""
+    rows_2d = _sheet_to_2d(isr_path, 'פירוט עסקאות')
     try:
-        df = pd.read_excel(isr_path, sheet_name='\u05e4\u05d9\u05e8\u05d5\u05d8 \u05e2\u05e1\u05e7\u05d0\u05d5\u05ea', header=None, engine='openpyxl')
-        ws = wb.sheets['\u05d0\u05d9\u05e9\u05e8\u05d0\u05db\u05e8\u05d8']
-        # Get category formula template from row 2
-        cat_formula = ws.cells(2, 9).formula or ws.cells(2, 9).formula_array
-        # Find data start row in downloaded file
-        data_start = 0
-        for i, row in df.iterrows():
-            if '\u05ea\u05d0\u05e8\u05d9\u05da \u05e8\u05db\u05d9\u05e9\u05d4' in str(list(row)):
-                data_start = i + 1; break
-        # Collect valid data rows (date pattern DD.MM.YY)
-        data_rows = []
-        for i in range(data_start, len(df)):
-            row = list(df.iloc[i])
-            first = str(row[0])
-            if any(x in first for x in ['\u05e1\u05d4"\u05db', '\u05ea\u05e0\u05d0\u05d9\u05dd']) or first.strip() in ('', 'nan'): continue
-            if re2.match(r'\d{2}\.\d{2}\.\d{2}', first): data_rows.append(row)
-        # Clear rows 2+ all cols
-        used = ws.api.UsedRange.Rows.Count
-        if used >= 2:
-            ws.range(ws.cells(2, 1), ws.cells(used + 5, 9)).clear_contents()
-        # Write data cols A-H
-        for r_idx, row in enumerate(data_rows, start=2):
-            for c_idx, val in enumerate(row[:8], start=1):
-                if val is not None and str(val) != 'nan':
-                    ws.cells(r_idx, c_idx).value = val
-        # Extend category formula col I
-        if cat_formula:
-            for r_idx in range(2, 2 + len(data_rows)):
-                new_f = re2.sub(r'([A-Z]+)2(?=[^0-9]|$)', lambda m: m.group(1) + str(r_idx), cat_formula)
-                ws.cells(r_idx, 9).formula = new_f
-        ok(f"  Updated \u05d0\u05d9\u05e9\u05e8\u05d0\u05db\u05e8\u05d8: {len(data_rows)} rows")
+        ws = wb.sheets['אישראכרט']
+        ws.clear_contents()
+        ws['A1'].value = rows_2d
+        wb.save()
+        ok(f'אישראכרט: {len(rows_2d)} rows')
     except Exception as e:
-        warn(f"  \u05d0\u05d9\u05e9\u05e8\u05d0\u05db\u05e8\u05d8 error: {e}")
+        warn(f'אישראכרט sheet error: {e}')
+
 
 
 def save_history_snapshot(wb):
