@@ -405,7 +405,12 @@ def main():
 # =============================================================================
 
 def _sheet_to_2d(path, sheet_name):
-    """Read an entire sheet as raw 2D list. Supports real XLS and XLSX."""
+    """Read an entire sheet as raw 2D list. Uses xlrd for .xls, openpyxl for .xlsx."""
+    if path.lower().endswith('.xlsx') or path.lower().endswith('.xlsm'):
+        import openpyxl
+        wb2 = openpyxl.load_workbook(path, data_only=True)
+        sh2 = wb2[sheet_name]
+        return [list(row) for row in sh2.iter_rows(values_only=True)]
     try:
         import xlrd
         wb = xlrd.open_workbook(path, encoding_override='windows-1255')
@@ -417,11 +422,8 @@ def _sheet_to_2d(path, sheet_name):
             rows.append(row)
         return rows
     except Exception as e:
-        warn(f'  _sheet_to_2d xlrd failed ({e}), trying openpyxl')
-        import openpyxl
-        wb2 = openpyxl.load_workbook(path, data_only=True)
-        sh2 = wb2[sheet_name]
-        return [list(row) for row in sh2.iter_rows(values_only=True)]
+        warn(f'  _sheet_to_2d failed ({e})')
+        return []
 
 
 def write_rikhuz_yitarot(wb, path):
