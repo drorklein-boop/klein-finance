@@ -483,9 +483,17 @@ def _to_float(v):
 def write_rikhuz_yitarot(wb, path):
     import pandas as pd
     try:
-        tables = pd.read_html(path, encoding='utf-8')
+        import lxml
+    except ImportError:
+        import subprocess as _sp, sys as _sys
+        _sp.run([_sys.executable, '-m', 'pip', 'install', 'lxml', '-q'], capture_output=True)
+    try:
+        tables = pd.read_html(path, encoding='utf-8', flavor='lxml')
     except Exception:
-        tables = pd.read_html(path, encoding='windows-1255')
+        try:
+            tables = pd.read_html(path, encoding='windows-1255', flavor='lxml')
+        except Exception:
+            tables = pd.read_html(path, encoding='utf-8')
     summary = None
     mortgage = None
     for t in tables:
