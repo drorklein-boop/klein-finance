@@ -515,6 +515,7 @@ def write_rikhuz_yitarot(wb, path):
         rows.append(['\u05de\u05e9\u05db\u05e0\u05ea\u05d0\u05d5\u05ea', str(mortgage.iloc[0, 1]).strip(), _to_float(mortgage.iloc[0, 2])])
     try:
         ws = wb.sheets['\u05e8\u05d9\u05db\u05d5\u05d6 \u05d9\u05ea\u05e8\u05d5\u05ea \u05dc\u05d0\u05d5\u05de\u05d9']
+        ws.clear_contents()
         ws['A1'].value = [['\u05e1\u05d5\u05d2 \u05e4\u05e2\u05d9\u05dc\u05d5\u05ea', '\u05e0\u05db\u05d5\u05df \u05dc\u05ea\u05d0\u05e8\u05d9\u05da', '\u05d9\u05ea\u05e8\u05d4 \u05d1\u05e9"\u05d7']]
         ws['A2'].value = rows
         wb.save()
@@ -534,6 +535,7 @@ def write_tik_hashkaot(wb, path):
             data_rows.append(vals)
     try:
         ws = wb.sheets['\u05ea\u05d9\u05e7 \u05d4\u05e9\u05e7\u05e2\u05d5\u05ea \u05e2\u05d3\u05db\u05e0\u05d9']
+        ws.clear_contents()
         ws['A1'].value = [headers]
         ws['A2'].value = data_rows
         try:
@@ -580,6 +582,7 @@ def write_maskleka(wb, path, sheet_name):
         rows.append([product, company, policy, status, savings])
     try:
         ws = wb.sheets[sheet_name]
+        ws.clear_contents()
         ws['A1'].value = [header]
         ws['A2'].value = rows
         wb.save()
