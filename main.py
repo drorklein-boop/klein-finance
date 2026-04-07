@@ -405,8 +405,7 @@ def main():
 # =============================================================================
 
 def _sheet_to_2d(path, sheet_name):
-    """Read entire sheet as 2D list. Tries sheet_name, falls back to first sheet with data.
-    Tries openpyxl first (xlsx/xlsm), then xlrd (xls). path can be str or WindowsPath."""
+    """Read entire sheet as 2D list. path can be str or WindowsPath."""
     path = str(path)
     try:
         import openpyxl
@@ -414,10 +413,10 @@ def _sheet_to_2d(path, sheet_name):
         names = xwb.sheetnames
         if sheet_name in names:
             sh = xwb[sheet_name]
-            ok(f'  reading sheet: {sheet_name}')
+            ok(f'  reading: {sheet_name}')
         else:
             sh = next((xwb[n] for n in names if xwb[n].max_row and xwb[n].max_row > 1), xwb.worksheets[0])
-            warn(f'  Sheet "{sheet_name}" not found. Using: {sh.title}. Available: {names}')
+            warn(f'  "{sheet_name}" not found. Using: {sh.title}. Available: {names}')
         return [list(row) for row in sh.iter_rows(values_only=True)]
     except Exception:
         pass
@@ -427,16 +426,16 @@ def _sheet_to_2d(path, sheet_name):
         names = xwb.sheet_names()
         if sheet_name in names:
             sh = xwb.sheet_by_name(sheet_name)
-            ok(f'  reading sheet: {sheet_name}')
+            ok(f'  reading: {sheet_name}')
         else:
             sh = next((xwb.sheet_by_index(i) for i in range(xwb.nsheets) if xwb.sheet_by_index(i).nrows > 1), xwb.sheet_by_index(0))
-            warn(f'  Sheet "{sheet_name}" not found. Using: {sh.name}. Available: {names}')
+            warn(f'  "{sheet_name}" not found. Using: {sh.name}. Available: {names}')
         rows = []
         for r in range(sh.nrows):
             rows.append([sh.cell(r,c).value if sh.cell(r,c).ctype != 0 else None for c in range(sh.ncols)])
         return rows
     except Exception as e:
-        warn(f'  _sheet_to_2d failed for {path}: {e}')
+        warn(f'  _sheet_to_2d failed: {e}')
         return []
 
 
