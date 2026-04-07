@@ -237,34 +237,34 @@ def update_excel_xlwings(values, found):
         except: pass
         ok("Excel saved - button and macro preserved!")
     
-    # --- v7.0: detail sheets ---
-    try:
-        from pathlib import Path as _P2
-        _m2 = _P2(r'C:\\KleinFinance\\monthly')
-        _fs2 = sorted(_m2.glob('*'), key=lambda x: x.stat().st_mtime, reverse=True)
-        for _f2 in _fs2:
-            _n2 = _f2.name
-            if '\u05e8\u05d9\u05db\u05d5\u05d6' in _n2 and '\u05d9\u05ea\u05e8\u05d5\u05ea' in _n2:
-                write_rikhuz_yitarot(wb, str(_f2))
-                break
-        for _f2 in _fs2:
-            if '\u05d0\u05d7\u05d6\u05e7\u05d5\u05ea' in _f2.name:
-                write_tik_hashkaot(wb, str(_f2))
-                break
-        _dd, _ll = False, False
-        for _f2 in _fs2:
-            _n2 = _f2.name
-            if '\u05d4\u05ea\u05de\u05d5\u05e0\u05d4' in _n2 and '(10)' in _n2 and not _dd:
-                write_maskleka(wb, str(_f2), '\u05d3\u05e8\u05d5\u05e8 - \u05de\u05e1\u05dc\u05e7\u05d4')
-                _dd = True
-            elif '\u05d4\u05ea\u05de\u05d5\u05e0\u05d4' in _n2 and '(11)' in _n2 and not _ll:
-                write_maskleka(wb, str(_f2), '\u05dc\u05d9\u05d0\u05ea - \u05de\u05e1\u05dc\u05e7\u05d4')
-                _ll = True
-            if _dd and _ll:
-                break
-    except Exception as _e2:
-        warn('detail sheets error: ' + str(_e2))
-    save_history_snapshot(wb)
+        # --- v7.0: detail sheets ---
+        try:
+            from pathlib import Path as _P2
+            _m2 = _P2(r'C:\KleinFinance\monthly')
+            _fs2 = sorted(_m2.glob('*'), key=lambda x: x.stat().st_mtime, reverse=True)
+            for _f2 in _fs2:
+                _n2 = _f2.name
+                if '\u05e8\u05d9\u05db\u05d5\u05d6' in _n2 and '\u05d9\u05ea\u05e8\u05d5\u05ea' in _n2:
+                    write_rikhuz_yitarot(wb, str(_f2))
+                    break
+            for _f2 in _fs2:
+                if '\u05d0\u05d7\u05d6\u05e7\u05d5\u05ea' in _f2.name:
+                    write_tik_hashkaot(wb, str(_f2))
+                    break
+            _dd, _ll = False, False
+            for _f2 in _fs2:
+                _n2 = _f2.name
+                if '\u05d4\u05ea\u05de\u05d5\u05e0\u05d4' in _n2 and '(10)' in _n2 and not _dd:
+                    write_maskleka(wb, str(_f2), '\u05d3\u05e8\u05d5\u05e8 - \u05de\u05e1\u05dc\u05e7\u05d4')
+                    _dd = True
+                elif '\u05d4\u05ea\u05de\u05d5\u05e0\u05d4' in _n2 and '(11)' in _n2 and not _ll:
+                    write_maskleka(wb, str(_f2), '\u05dc\u05d9\u05d0\u05ea - \u05de\u05e1\u05dc\u05e7\u05d4')
+                    _ll = True
+                if _dd and _ll:
+                    break
+        except Exception as _e2:
+            warn('detail sheets error: ' + str(_e2))
+        save_history_snapshot(wb)
         return True
     except Exception as e:
         warn(f"xlwings error: {e}")
