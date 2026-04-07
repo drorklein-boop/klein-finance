@@ -462,25 +462,31 @@ def main():
 
 
 # =============================================================================
-# v7.0 — Four detail-sheet writers
+# v7.3 — Four detail-sheet writers (full-sheet copy approach)
 # =============================================================================
 
-def _to_float(v):
-    if isinstance(v, (int, float)):
-        return 0.0 if str(v).lower() in ('nan', 'inf', '-inf') else float(v)
-    s = str(v)
-    for ch in [',', '\u200e', '\u200f', '\u202a', '\u202c', '\u200b']:
-        s = s.replace(ch, '')
-    s = s.strip()
-    if not s or s.lower() in ('nan', 'none', 'nat', ''):
-        return 0.0
+def _sheet_to_2d(path, sheet_name):
+    """Read an entire sheet as raw 2D list. Supports real XLS and XLSX."""
     try:
-        return float(s)
-    except Exception:
-        return 0.0
+        import xlrd
+        wb = xlrd.open_workbook(path, encoding_override='windows-1255')
+        sh = wb.sheet_by_name(sheet_name)
+        rows = []
+        for r in range(sh.nrows):
+            row = [sh.cell(r, c).value if sh.cell(r, c).ctype != 0 else None
+                   for c in range(sh.ncols)]
+            rows.append(row)
+        return rows
+    except Exception as e:
+        warn(f'  _sheet_to_2d xlrd failed ({e}), trying openpyxl')
+        import openpyxl
+        wb2 = openpyxl.load_workbook(path, data_only=True)
+        sh2 = wb2[sheet_name]
+        return [list(row) for row in sh2.iter_rows(values_only=True)]
 
 
 def write_rikhuz_yitarot(wb, path):
+    """Copy the \u05e8\u05d9\u05db\u05d5\u05d6 \u05d9\u05ea\u05e8\u05d5\u05ea summary table wholesale into the destination sheet."""
     import pandas as pd
     try:
         import lxml
@@ -494,101 +500,61 @@ def write_rikhuz_yitarot(wb, path):
             tables = pd.read_html(path, encoding='windows-1255', flavor='lxml')
         except Exception:
             tables = pd.read_html(path, encoding='utf-8')
-    summary = None
-    mortgage = None
+
+    # Find the summary table (3 cols, contains \u05e2\u05d5\u05d1\u05e8 \u05d5\u05e9\u05d1)
+    target = None
     for t in tables:
-        col0 = [str(v) for v in t.iloc[:, 0].values]
-        if t.shape[1] == 3 and any('\u05e2\u05d5\u05d1\u05e8' in v for v in col0):
-            summary = t
-        if t.shape[0] == 1 and '\u05de\u05e9\u05db\u05e0\u05ea\u05d0\u05d5\u05ea' in str(t.values) and t.shape[1] >= 3:
-            mortgage = t
-    if summary is None:
-        warn('rikhuz yitarot table not found')
+        if t.shape[1] == 3 and any('\u05e2\u05d5\u05d1\u05e8' in str(v) for v in t.iloc[:, 0].values):
+            target = t
+            break
+    if target is None:
+        warn('\u05e8\u05d9\u05db\u05d5\u05d6 \u05d9\u05ea\u05e8\u05d5\u05ea: summary table not found')
         return
-    rows = []
-    for _, r in summary.iterrows():
-        activity = str(r.iloc[0]).strip()
-        date_s = '' if str(r.iloc[1]).lower() in ('nan', 'nat', 'none') else str(r.iloc[1]).strip()
-        amount = _to_float(r.iloc[2])
-        rows.append([activity, date_s, amount])
-    if mortgage is not None:
-        rows.append(['\u05de\u05e9\u05db\u05e0\u05ea\u05d0\u05d5\u05ea', str(mortgage.iloc[0, 1]).strip(), _to_float(mortgage.iloc[0, 2])])
+
+    # Build 2D list: header row + data rows
+    rows_2d = [list(target.columns)] + [list(r) for r in target.values.tolist()]
+
+    # Also find mortgage row and append
+    for t in tables:
+        if t.shape[0] == 1 and '\u05de\u05e9\u05db\u05e0\u05ea\u05d0\u05d5\u05ea' in str(t.values) and t.shape[1] >= 3:
+            rows_2d.append(['\u05de\u05e9\u05db\u05e0\u05ea\u05d0\u05d5\u05ea', str(t.iloc[0, 1]), str(t.iloc[0, 2])])
+            break
+
     try:
         ws = wb.sheets['\u05e8\u05d9\u05db\u05d5\u05d6 \u05d9\u05ea\u05e8\u05d5\u05ea \u05dc\u05d0\u05d5\u05de\u05d9']
         ws.clear_contents()
-        ws['A1'].value = [['\u05e1\u05d5\u05d2 \u05e4\u05e2\u05d9\u05dc\u05d5\u05ea', '\u05e0\u05db\u05d5\u05df \u05dc\u05ea\u05d0\u05e8\u05d9\u05da', '\u05d9\u05ea\u05e8\u05d4 \u05d1\u05e9"\u05d7']]
-        ws['A2'].value = rows
+        ws['A1'].value = rows_2d
         wb.save()
-        ok('\u05e8\u05d9\u05db\u05d5\u05d6 \u05d9\u05ea\u05e8\u05d5\u05ea \u05dc\u05d0\u05d5\u05de\u05d9: ' + str(len(rows)) + ' rows')
+        ok(f'\u05e8\u05d9\u05db\u05d5\u05d6 \u05d9\u05ea\u05e8\u05d5\u05ea \u05dc\u05d0\u05d5\u05de\u05d9: {len(rows_2d)} rows')
     except Exception as e:
-        warn('rikhuz yitarot sheet error: ' + str(e))
+        warn(f'\u05e8\u05d9\u05db\u05d5\u05d6 \u05d9\u05ea\u05e8\u05d5\u05ea sheet error: {e}')
 
 
 def write_tik_hashkaot(wb, path):
-    import pandas as pd
-    df = pd.read_excel(path, sheet_name='Sheet1', header=None)
-    headers = [str(v) for v in df.iloc[4].tolist()]
-    data_rows = []
-    for _, row in df.iloc[5:].iterrows():
-        vals = row.tolist()
-        if any(str(v) not in ('nan', '', 'None') for v in vals):
-            data_rows.append(vals)
+    """Copy entire Sheet1 from \u05d0\u05d7\u05d6\u05e7\u05d5\u05ea file wholesale into destination sheet."""
+    rows_2d = _sheet_to_2d(path, 'Sheet1')
     try:
         ws = wb.sheets['\u05ea\u05d9\u05e7 \u05d4\u05e9\u05e7\u05e2\u05d5\u05ea \u05e2\u05d3\u05db\u05e0\u05d9']
         ws.clear_contents()
-        ws['A1'].value = [headers]
-        ws['A2'].value = data_rows
-        try:
-            total_val = _to_float(str(df.iloc[2, 3]).replace(',', ''))
-            total_label = str(df.iloc[2, 2]).strip()
-            ws['A' + str(2 + len(data_rows) + 1)].value = total_label
-            ws['C' + str(2 + len(data_rows) + 1)].value = total_val
-        except Exception:
-            pass
+        ws['A1'].value = rows_2d
         wb.save()
-        ok('\u05ea\u05d9\u05e7 \u05d4\u05e9\u05e7\u05e2\u05d5\u05ea \u05e2\u05d3\u05db\u05e0\u05d9: ' + str(len(data_rows)) + ' holdings')
+        ok(f'\u05ea\u05d9\u05e7 \u05d4\u05e9\u05e7\u05e2\u05d5\u05ea \u05e2\u05d3\u05db\u05e0\u05d9: {len(rows_2d)} rows')
     except Exception as e:
-        warn('tik hashkaot sheet error: ' + str(e))
+        warn(f'\u05ea\u05d9\u05e7 \u05d4\u05e9\u05e7\u05e2\u05d5\u05ea sheet error: {e}')
 
 
 def write_maskleka(wb, path, sheet_name):
-    import xlrd
-    try:
-        xwb = xlrd.open_workbook(path, encoding_override='windows-1255')
-    except Exception as e:
-        warn('cannot open ' + path + ': ' + str(e))
-        return
-    src = None
-    for s in xwb.sheets():
-        if '\u05e4\u05e8\u05d8\u05d9' in s.name and '\u05de\u05d5\u05e6\u05e8\u05d9\u05dd' in s.name:
-            src = s
-            break
-    if src is None:
-        warn('maskleka sheet not found in ' + path)
-        return
-    header = ['\u05e9\u05dd \u05de\u05d5\u05e6\u05e8', '\u05e9\u05dd \u05d7\u05d1\u05e8\u05d4 \u05de\u05e0\u05d4\u05dc\u05ea', '\u05de\u05e1\u05e4\u05e8 \u05e4\u05d5\u05dc\u05d9\u05e1\u05d4', '\u05e1\u05d8\u05d8\u05d5\u05e1', '\u05e1\u05da \u05d4\u05db\u05dc \u05d7\u05d9\u05e1\u05db\u05d5\u05df']
-    rows = []
-    for r in range(1, src.nrows):
-        product = str(src.cell(r, 0).value).strip()
-        if not product:
-            continue
-        company = str(src.cell(r, 1).value).strip()
-        policy = str(src.cell(r, 2).value).strip()
-        status = str(src.cell(r, 3).value).strip()
-        try:
-            savings = float(src.cell(r, 4).value)
-        except Exception:
-            savings = _to_float(str(src.cell(r, 4).value))
-        rows.append([product, company, policy, status, savings])
+    """Copy entire \u05e4\u05e8\u05d8\u05d9 \u05d4\u05de\u05d5\u05e6\u05e8\u05d9\u05dd \u05e9\u05dc\u05d9 sheet wholesale into destination sheet."""
+    rows_2d = _sheet_to_2d(path, '\u05e4\u05e8\u05d8\u05d9 \u05d4\u05de\u05d5\u05e6\u05e8\u05d9\u05dd \u05e9\u05dc\u05d9')
     try:
         ws = wb.sheets[sheet_name]
         ws.clear_contents()
-        ws['A1'].value = [header]
-        ws['A2'].value = rows
+        ws['A1'].value = rows_2d
         wb.save()
-        ok(sheet_name + ': ' + str(len(rows)) + ' products')
+        ok(f'{sheet_name}: {len(rows_2d)} rows')
     except Exception as e:
-        warn(sheet_name + ' sheet error: ' + str(e))
+        warn(f'{sheet_name} sheet error: {e}')
+
 
 if __name__ == "__main__":
     main()
