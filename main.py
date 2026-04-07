@@ -1,4 +1,4 @@
-# Klein Finance - Monthly Sheet Updater v7.2
+# Klein Finance - Monthly Sheet Updater v7.3
 import sys, shutil, datetime
 from pathlib import Path
 from collections import defaultdict
@@ -19,38 +19,49 @@ def detect_type(fname):
     return None
 
 def clean_val(val):
-    """Strip invisible RTL markers; convert number-strings to floats."""
     if isinstance(val, str):
-        cleaned = val.replace('\u200e', '').replace('\u200f', '').strip()
-        try:
-            return float(cleaned.replace(',', ''))
-        except ValueError:
-            return cleaned if cleaned else None
+        for ch in ('\u200e','\u200f','\u202b','\u202c'):
+            val = val.replace(ch, '')
+        val = val.strip()
+        try: return float(val.replace(',',''))
+        except: return val if val else None
     return val
 
-def read_all_rows(path, sheet_name, is_xls=False):
-    """Read ALL rows exactly as-is, preserving positions. Strip RTL artifacts only."""
-    if is_xls:
-        import xlrd
-        wb = xlrd.open_workbook(path)
-        ws = wb.sheet_by_name(sheet_name)
-        return [[clean_val(ws.cell(r, c).value) for c in range(ws.ncols)]
-                for r in range(ws.nrows)]
-    else:
-        import openpyxl
-        wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
-        ws = wb[sheet_name]
-        data = [[clean_val(v) for v in row] for row in ws.iter_rows(values_only=True)]
-        wb.close()
-        return data
+def read_full_xlsx(path, sheet_name=None):
+    import openpyxl
+    wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    sname = sheet_name or wb.sheetnames[0]
+    ws = wb[sname]
+    data = [[clean_val(v) for v in row] for row in ws.iter_rows(values_only=True)]
+    wb.close()
+    return data
+
+def read_full_xls(path, sheet_name):
+    import xlrd
+    wb = xlrd.open_workbook(path)
+    ws = wb.sheet_by_name(sheet_name)
+    return [[clean_val(ws.cell(r,c).value) for c in range(ws.ncols)] for r in range(ws.nrows)]
+
+def read_from_header(path, header_col0_value, sheet_name=None):
+    """Skip metadata rows at top; start writing from the real header row."""
+    import openpyxl
+    wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    sname = sheet_name or wb.sheetnames[0]
+    ws = wb[sname]
+    all_rows = list(ws.iter_rows(values_only=True))
+    wb.close()
+    start = next((i for i, r in enumerate(all_rows)
+                  if r[0] and str(r[0]).strip() == header_col0_value), None)
+    if start is None:
+        raise ValueError(f"Header '{header_col0_value}' not found in {path.name}")
+    return [[clean_val(v) for v in row] for row in all_rows[start:]]
 
 def collect_files():
     typed = defaultdict(list)
     for f in MONTHLY.iterdir():
         if not f.is_file(): continue
         t = detect_type(f.name)
-        if t:
-            typed[t].append(f)
+        if t: typed[t].append(f)
     for t in typed:
         typed[t].sort(key=lambda f: f.stat().st_mtime, reverse=True)
     return typed
@@ -67,10 +78,10 @@ def read_file(ftype, fpath):
                            for row in wb[sname].iter_rows(values_only=True)]
                   for sname in wb.sheetnames}
         wb.close()
-        return sheets  # sheet name matches target exactly
+        return sheets
 
     elif ftype == 'bank' and is_xlsx:
-        return {'עוש': read_all_rows(fpath, 'עוש')}
+        return {'עוש': read_full_xlsx(fpath, 'עוש')}
 
     elif ftype == 'invest' and is_xlsx:
         import openpyxl
@@ -86,31 +97,22 @@ def read_file(ftype, fpath):
         return {}
 
     elif ftype == 'pension_dror' and is_xls:
-        return {'דרור - מסלקה': read_all_rows(fpath, 'פרטי המוצרים שלי', is_xls=True)}
+        return {'דרור - מסלקה': read_full_xls(fpath, 'פרטי המוצרים שלי')}
 
     elif ftype == 'pension_liat' and is_xls:
-        return {'ליאת - מסלקה': read_all_rows(fpath, 'פרטי המוצרים שלי', is_xls=True)}
+        return {'ליאת - מסלקה': read_full_xls(fpath, 'פרטי המוצרים שלי')}
 
     elif ftype == 'isracard' and is_xlsx:
-        import openpyxl
-        wb = openpyxl.load_workbook(fpath, read_only=True, data_only=True)
-        sname = wb.sheetnames[0]
-        data = [[clean_val(v) for v in row] for row in wb[sname].iter_rows(values_only=True)]
-        wb.close()
-        return {'אישראכרט': data}
+        # Source has metadata rows above the real header — skip them
+        return {'אישראכרט': read_from_header(fpath, 'תאריך רכישה')}
 
     elif ftype == 'balance' and is_xlsx:
-        import openpyxl
-        wb = openpyxl.load_workbook(fpath, read_only=True, data_only=True)
-        sname = wb.sheetnames[0]
-        data = [[clean_val(v) for v in row] for row in wb[sname].iter_rows(values_only=True)]
-        wb.close()
-        return {'ריכוז יתרות לאומי': data}
+        # Source has 10 metadata rows above the real data — skip them
+        return {'ריכוז יתרות לאומי': read_from_header(fpath, 'סוג פעילות')}
 
     return {}
 
 def write_sheet(xw_wb, target_name, data):
-    """Clear sheet, write all rows from A1 — preserves source cell positions."""
     ws = xw_wb.sheets[target_name]
     ws.clear_contents()
     if data:
@@ -121,7 +123,7 @@ def write_sheet(xw_wb, target_name, data):
         xw_wb.app.screen_updating = True
 
 def main():
-    print("\n  Klein Finance - Monthly Update v7.2")
+    print("\n  Klein Finance - Monthly Update v7.3")
     print("  =====================================")
 
     try:
@@ -190,8 +192,7 @@ def main():
     wb.save()
 
     print("\n  Results:")
-    for r in results:
-        print(r)
+    for r in results: print(r)
     print("\n  Done.")
     input("\n  Press Enter to close...")
 
