@@ -405,24 +405,47 @@ def main():
 # =============================================================================
 
 def _sheet_to_2d(path, sheet_name):
-    """Read an entire sheet as raw 2D list. Uses xlrd for .xls, openpyxl for .xlsx."""
-    if path.lower().endswith('.xlsx') or path.lower().endswith('.xlsm'):
-        import openpyxl
-        wb2 = openpyxl.load_workbook(path, data_only=True)
-        sh2 = wb2[sheet_name]
-        return [list(row) for row in sh2.iter_rows(values_only=True)]
+    """Read entire sheet as 2D list. Tries sheet_name first, falls back to first
+    non-empty sheet if not found. Always logs which sheet was actually used.
+    Uses openpyxl for .xlsx/.xlsm, xlrd for .xls.
+    """
+    import os as _os2
+    fname = _os2.path.basename(path)
+    ext = path.lower().rsplit('.', 1)[-1]
+
+    def _pick_sheet_openpyxl(wb2):
+        names = wb2.sheetnames
+        if sheet_name in names:
+            ok(f'  [{fname}] using sheet: {sheet_name}')
+            return wb2[sheet_name]
+        fallback = next((wb2[n] for n in names if wb2[n].max_row and wb2[n].max_row > 1), wb2.worksheets[0])
+        warn(f'  [{fname}] sheet "{sheet_name}" not found. Available: {names}. Using: {fallback.title}')
+        return fallback
+
+    def _pick_sheet_xlrd(xwb):
+        names = xwb.sheet_names()
+        if sheet_name in names:
+            ok(f'  [{fname}] using sheet: {sheet_name}')
+            return xwb.sheet_by_name(sheet_name)
+        fallback = next((xwb.sheet_by_index(i) for i in range(xwb.nsheets) if xwb.sheet_by_index(i).nrows > 1), xwb.sheet_by_index(0))
+        warn(f'  [{fname}] sheet "{sheet_name}" not found. Available: {names}. Using: {fallback.name}')
+        return fallback
+
     try:
-        import xlrd
-        wb = xlrd.open_workbook(path, encoding_override='windows-1255')
-        sh = wb.sheet_by_name(sheet_name)
-        rows = []
-        for r in range(sh.nrows):
-            row = [sh.cell(r, c).value if sh.cell(r, c).ctype != 0 else None
-                   for c in range(sh.ncols)]
-            rows.append(row)
-        return rows
+        if ext in ('xlsx', 'xlsm'):
+            import openpyxl
+            sh = _pick_sheet_openpyxl(openpyxl.load_workbook(path, data_only=True))
+            return [list(row) for row in sh.iter_rows(values_only=True)]
+        else:
+            import xlrd
+            sh = _pick_sheet_xlrd(xlrd.open_workbook(path, encoding_override='windows-1255'))
+            rows = []
+            for r in range(sh.nrows):
+                row = [sh.cell(r, c).value if sh.cell(r, c).ctype != 0 else None for c in range(sh.ncols)]
+                rows.append(row)
+            return rows
     except Exception as e:
-        warn(f'  _sheet_to_2d failed ({e})')
+        warn(f'  [{fname}] _sheet_to_2d failed: {e}')
         return []
 
 
