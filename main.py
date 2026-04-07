@@ -409,6 +409,7 @@ def _sheet_to_2d(path, sheet_name):
     non-empty sheet if not found. Always logs which sheet was actually used.
     Uses openpyxl for .xlsx/.xlsm, xlrd for .xls.
     """
+    path = str(path)
     import os as _os2
     fname = _os2.path.basename(path)
     ext = path.lower().rsplit('.', 1)[-1]
