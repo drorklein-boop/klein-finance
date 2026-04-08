@@ -11,7 +11,7 @@ API_KEY_FILE = BASE / "api_key.txt"
 DROR_POLICY = '35995836'
 LIAT_POLICY = '6650891010'
 
-# ââ Tracker âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+# Ã¢ÂÂÃ¢ÂÂ Tracker Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 def load_tracker():
     if TRACKER.exists():
@@ -33,18 +33,18 @@ def is_new(fpath, tracker):
     t = tracker[key]
     return t.get('mtime') != sig['mtime'] or t.get('size') != sig['size']
 
-# ââ Detection âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+# Ã¢ÂÂÃ¢ÂÂ Detection Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 def detect_by_name(fname):
     if fname.startswith('~'): return None
     name = fname.lower()
     if name.endswith(('.jpeg','.jpg','.png')): return 'rsu_image'
     if 'transaction-details' in name: return 'credit'
-    if '×¢××©' in name or '×××××' in name: return 'bank'
-    if '××××§××ª' in name: return 'invest'
-    if '××ª××× × ×××××' in name: return 'pension_check'
-    if '5647' in name or '×××©×¨×××¨×' in name: return 'isracard'
-    if '×¨××××' in name and '××ª×¨××ª' in name: return 'balance'
+    if 'ÃÂ¢ÃÂÃÂ©' in name or 'ÃÂÃÂÃÂÃÂÃÂ' in name: return 'bank'
+    if 'ÃÂÃÂÃÂÃÂ§ÃÂÃÂª' in name: return 'invest'
+    if 'ÃÂÃÂªÃÂÃÂÃÂ ÃÂ ÃÂÃÂÃÂÃÂÃÂ' in name: return 'pension_check'
+    if '5647' in name or 'ÃÂÃÂÃÂ©ÃÂ¨ÃÂÃÂÃÂ¨ÃÂ' in name: return 'isracard'
+    if 'ÃÂ¨ÃÂÃÂÃÂÃÂ' in name and 'ÃÂÃÂªÃÂ¨ÃÂÃÂª' in name: return 'balance'
     return None
 
 def detect_by_content(fpath):
@@ -58,16 +58,16 @@ def detect_by_content(fpath):
             sheets = set(wb.sheetnames)
             first_rows = list(wb[wb.sheetnames[0]].iter_rows(values_only=True))[:3]
             wb.close()
-            if '×¢×¡×§×××ª ××××¢× ×××××' in sheets or '×¢×¡×§×××ª ××"× ×××"×' in sheets: return 'credit'
-            if '×¤××¨×× ×¢×¡×§×××ª' in sheets: return 'isracard'
-            if '×¢××©' in sheets: return 'bank'
+            if 'ÃÂ¢ÃÂ¡ÃÂ§ÃÂÃÂÃÂª ÃÂÃÂÃÂÃÂ¢ÃÂ ÃÂÃÂÃÂÃÂÃÂ' in sheets or 'ÃÂ¢ÃÂ¡ÃÂ§ÃÂÃÂÃÂª ÃÂÃÂ"ÃÂ ÃÂÃÂÃÂ"ÃÂ' in sheets: return 'credit'
+            if 'ÃÂ¤ÃÂÃÂ¨ÃÂÃÂ ÃÂ¢ÃÂ¡ÃÂ§ÃÂÃÂÃÂª' in sheets: return 'isracard'
+            if 'ÃÂ¢ÃÂÃÂ©' in sheets: return 'bank'
             for row in first_rows:
-                if any('××× ×××©×' in str(v or '') for v in row): return 'invest'
+                if any('ÃÂÃÂÃÂ ÃÂÃÂÃÂ©ÃÂ' in str(v or '') for v in row): return 'invest'
         elif is_xls:
             import xlrd
             wb = xlrd.open_workbook(fpath)
-            if '×¤×¨×× ××××¦×¨×× ×©××' in set(wb.sheet_names()):
-                ws = wb.sheet_by_name('×¤×¨×× ××××¦×¨×× ×©××')
+            if 'ÃÂ¤ÃÂ¨ÃÂÃÂ ÃÂÃÂÃÂÃÂ¦ÃÂ¨ÃÂÃÂ ÃÂ©ÃÂÃÂ' in set(wb.sheet_names()):
+                ws = wb.sheet_by_name('ÃÂ¤ÃÂ¨ÃÂÃÂ ÃÂÃÂÃÂÃÂ¦ÃÂ¨ÃÂÃÂ ÃÂ©ÃÂÃÂ')
                 vals = ' '.join(str(ws.cell(r,c).value) for r in range(ws.nrows) for c in range(ws.ncols))
                 if DROR_POLICY in vals: return 'pension_dror'
                 if LIAT_POLICY in vals: return 'pension_liat'
@@ -80,7 +80,7 @@ def detect(fpath):
         return detect_by_content(fpath)
     return by_name
 
-# ââ RSU via Anthropic API âââââââââââââââââââââââââââââââââââââââââââââââââââââ
+# Ã¢ÂÂÃ¢ÂÂ RSU via Anthropic API Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 def read_rsu_from_image(img_path):
     try:
@@ -105,8 +105,8 @@ def read_rsu_from_image(img_path):
                 {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": img_b64}},
                 {"type": "text", "text": (
                     "This is an RSU portfolio screenshot. Extract exactly two numbers:\n"
-                    "1. ×××× ××××××© (available/vested) dollar amount\n"
-                    "2. ××¨× ×××©×× (unvested) dollar amount\n"
+                    "1. ÃÂÃÂÃÂÃÂ ÃÂÃÂÃÂÃÂÃÂÃÂ© (available/vested) dollar amount\n"
+                    "2. ÃÂÃÂ¨ÃÂ ÃÂÃÂÃÂ©ÃÂÃÂ (unvested) dollar amount\n"
                     "Reply with JSON only, no explanation: {\"available\": 170600.00, \"unvested\": 187148.20}"
                 )}
             ]
@@ -115,7 +115,7 @@ def read_rsu_from_image(img_path):
     result = json.loads(msg.content[0].text)
     return float(result['available']), float(result['unvested'])
 
-# ââ Reading âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+# Ã¢ÂÂÃ¢ÂÂ Reading Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 def clean_val(val):
     if isinstance(val, str):
@@ -161,29 +161,29 @@ def read_file(ftype, fpath):
         wb.close()
         return out
     elif ftype == 'bank' and is_xlsx:
-        return {'×¢××©': read_full_xlsx(fpath, '×¢××©')}
+        return {'ÃÂ¢ÃÂÃÂ©': read_full_xlsx(fpath, 'ÃÂ¢ÃÂÃÂ©')}
     elif ftype == 'invest' and is_xlsx:
         import openpyxl
         wb = openpyxl.load_workbook(fpath, read_only=True, data_only=True)
         for s in wb.sheetnames:
             first = next(wb[s].iter_rows(values_only=True), [])
-            if first and '××× ×××©×' in str(first[0] or ''):
+            if first and 'ÃÂÃÂÃÂ ÃÂÃÂÃÂ©ÃÂ' in str(first[0] or ''):
                 data = [[clean_val(v) for v in row] for row in wb[s].iter_rows(values_only=True)]
                 wb.close()
-                return {'×ª××§ ××©×§×¢××ª ×¢××× ×': data}
+                return {'ÃÂªÃÂÃÂ§ ÃÂÃÂ©ÃÂ§ÃÂ¢ÃÂÃÂª ÃÂ¢ÃÂÃÂÃÂ ÃÂ': data}
         wb.close()
         return {}
     elif ftype == 'pension_dror' and is_xls:
-        return {'××¨××¨ - ××¡××§×': read_full_xls(fpath, '×¤×¨×× ××××¦×¨×× ×©××')}
+        return {'ÃÂÃÂ¨ÃÂÃÂ¨ - ÃÂÃÂ¡ÃÂÃÂ§ÃÂ': read_full_xls(fpath, 'ÃÂ¤ÃÂ¨ÃÂÃÂ ÃÂÃÂÃÂÃÂ¦ÃÂ¨ÃÂÃÂ ÃÂ©ÃÂÃÂ')}
     elif ftype == 'pension_liat' and is_xls:
-        return {'××××ª - ××¡××§×': read_full_xls(fpath, '×¤×¨×× ××××¦×¨×× ×©××')}
+        return {'ÃÂÃÂÃÂÃÂª - ÃÂÃÂ¡ÃÂÃÂ§ÃÂ': read_full_xls(fpath, 'ÃÂ¤ÃÂ¨ÃÂÃÂ ÃÂÃÂÃÂÃÂ¦ÃÂ¨ÃÂÃÂ ÃÂ©ÃÂÃÂ')}
     elif ftype == 'isracard' and is_xlsx:
-        return {'×××©×¨×××¨×': read_from_header(fpath, '×ª××¨×× ×¨×××©×')}
+        return {'ÃÂÃÂÃÂ©ÃÂ¨ÃÂÃÂÃÂ¨ÃÂ': read_from_header(fpath, 'ÃÂªÃÂÃÂ¨ÃÂÃÂ ÃÂ¨ÃÂÃÂÃÂ©ÃÂ')}
     elif ftype == 'balance' and is_xlsx:
-        return {'×¨×××× ××ª×¨××ª ×××××': read_from_header(fpath, '×¡×× ×¤×¢××××ª')}
+        return {'ÃÂ¨ÃÂÃÂÃÂÃÂ ÃÂÃÂªÃÂ¨ÃÂÃÂª ÃÂÃÂÃÂÃÂÃÂ': read_from_header(fpath, 'ÃÂ¡ÃÂÃÂ ÃÂ¤ÃÂ¢ÃÂÃÂÃÂÃÂª')}
     return {}
 
-# ââ Write âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+# Ã¢ÂÂÃ¢ÂÂ Write Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 def write_sheet(xw_wb, name, data):
     ws = xw_wb.sheets[name]
@@ -195,10 +195,10 @@ def write_sheet(xw_wb, name, data):
         xw_wb.app.calculation = 'automatic'
         xw_wb.app.screen_updating = True
 
-# ââ Main ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+# Ã¢ÂÂÃ¢ÂÂ Main Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 
 def main():
-    print("\n  Klein Finance - Monthly Update v7.7")
+    print("\n  Klein Finance - Monthly Update v7.8")
     print("  =====================================")
 
     try:
@@ -218,9 +218,9 @@ def main():
         print("  ERROR: Excel is not open.")
         input("\n  Press Enter to close..."); return
 
-    wb = next((b for b in app.books if '××××_×§××××' in b.name), None)
+    wb = next((b for b in app.books if 'ÃÂÃÂÃÂÃÂ_ÃÂ§ÃÂÃÂÃÂÃÂ' in b.name), None)
     if not wb:
-        print("  ERROR: ××××_×§××××.xlsm not open.")
+        print("  ERROR: ÃÂÃÂÃÂÃÂ_ÃÂ§ÃÂÃÂÃÂÃÂ.xlsm not open.")
         input("\n  Press Enter to close..."); return
 
     print(f"  Workbook: {wb.name}")
@@ -228,9 +228,9 @@ def main():
     backup_dir = BASE / "backups"
     backup_dir.mkdir(exist_ok=True)
     ts = datetime.datetime.now().strftime("%Y-%m-%d_%H%M")
-    src = BASE / "××××_×§××××.xlsm"
+    src = BASE / "ÃÂÃÂÃÂÃÂ_ÃÂ§ÃÂÃÂÃÂÃÂ.xlsm"
     if src.exists():
-        shutil.copy2(src, backup_dir / f"××××_{ts}.xlsm")
+        shutil.copy2(src, backup_dir / f"ÃÂÃÂÃÂÃÂ_{ts}.xlsm")
         print("  Backup saved")
 
     tracker = load_tracker()
@@ -266,7 +266,7 @@ def main():
     for ftype, files in typed.items():
         fpath = files[0]
 
-        # RSU image â special handling
+        # RSU image Ã¢ÂÂ special handling
         if ftype == 'rsu_image':
             try:
                 available, unvested = read_rsu_from_image(fpath)
