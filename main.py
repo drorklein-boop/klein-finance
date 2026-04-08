@@ -1,16 +1,17 @@
-# Klein Finance - Monthly Sheet Updater v7.5
-import sys, shutil, datetime, json
+# Klein Finance - Monthly Sheet Updater v7.6
+import sys, shutil, datetime, json, base64
 from pathlib import Path
 from collections import defaultdict
 
 BASE    = Path(__file__).parent
 MONTHLY = BASE / "MONTHLY"
 TRACKER = BASE / "processed_files.json"
+API_KEY_FILE = BASE / "api_key.txt"
 
 DROR_POLICY = '35995836'
 LIAT_POLICY = '6650891010'
 
-# ── Tracker ──────────────────────────────────────────────────────────────────
+# ── Tracker ───────────────────────────────────────────────────────────────────
 
 def load_tracker():
     if TRACKER.exists():
@@ -37,6 +38,7 @@ def is_new(fpath, tracker):
 def detect_by_name(fname):
     if fname.startswith('~'): return None
     name = fname.lower()
+    if name.endswith(('.jpeg','.jpg','.png')): return 'rsu_image'
     if 'transaction-details' in name: return 'credit'
     if 'עוש' in name or 'לאומי' in name: return 'bank'
     if 'אחזקות' in name: return 'invest'
@@ -77,6 +79,41 @@ def detect(fpath):
     if by_name == 'pension_check' or by_name is None:
         return detect_by_content(fpath)
     return by_name
+
+# ── RSU via Anthropic API ─────────────────────────────────────────────────────
+
+def read_rsu_from_image(img_path):
+    try:
+        import anthropic
+    except ImportError:
+        import subprocess
+        subprocess.run([sys.executable,'-m','pip','install','anthropic','--quiet'], check=True)
+        import anthropic
+
+    api_key = API_KEY_FILE.read_text().strip()
+    img_b64 = base64.standard_b64encode(img_path.read_bytes()).decode()
+    ext = img_path.suffix.lower().lstrip('.')
+    media_type = 'image/jpeg' if ext in ('jpg','jpeg') else f'image/{ext}'
+
+    client = anthropic.Anthropic(api_key=api_key)
+    msg = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=256,
+        messages=[{
+            "role": "user",
+            "content": [
+                {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": img_b64}},
+                {"type": "text", "text": (
+                    "This is an RSU portfolio screenshot. Extract exactly two numbers:\n"
+                    "1. זמין למימוש (available/vested) dollar amount\n"
+                    "2. טרם הבשיל (unvested) dollar amount\n"
+                    "Reply with JSON only, no explanation: {\"available\": 170600.00, \"unvested\": 187148.20}"
+                )}
+            ]
+        }]
+    )
+    result = json.loads(msg.content[0].text)
+    return float(result['available']), float(result['unvested'])
 
 # ── Reading ───────────────────────────────────────────────────────────────────
 
@@ -161,7 +198,7 @@ def write_sheet(xw_wb, name, data):
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
-    print("\n  Klein Finance - Monthly Update v7.5")
+    print("\n  Klein Finance - Monthly Update v7.6")
     print("  =====================================")
 
     try:
@@ -188,7 +225,6 @@ def main():
 
     print(f"  Workbook: {wb.name}")
 
-    # Backup
     backup_dir = BASE / "backups"
     backup_dir.mkdir(exist_ok=True)
     ts = datetime.datetime.now().strftime("%Y-%m-%d_%H%M")
@@ -197,13 +233,10 @@ def main():
         shutil.copy2(src, backup_dir / f"מאזן_{ts}.xlsm")
         print("  Backup saved")
 
-    # Find new/changed files
     tracker = load_tracker()
     all_files = [f for f in MONTHLY.iterdir()
-                 if f.is_file()
-                 and not f.name.startswith('~')
-                 and f.suffix.lower() not in ('.jpeg','.jpg','.png','.xml')]
-
+                 if f.is_file() and not f.name.startswith('~')
+                 and f.suffix.lower() not in ('.xml',)]
     new_files = [f for f in all_files if is_new(f, tracker)]
 
     if not new_files:
@@ -212,7 +245,6 @@ def main():
 
     print(f"\n  New/changed files: {len(new_files)}")
 
-    # Group by type, newest per type among new files
     typed = defaultdict(list)
     for f in new_files:
         t = detect(f)
@@ -233,6 +265,19 @@ def main():
 
     for ftype, files in typed.items():
         fpath = files[0]
+
+        # RSU image — special handling
+        if ftype == 'rsu_image':
+            try:
+                available, unvested = read_rsu_from_image(fpath)
+                ws_rsu = wb.sheets['ALIGN RSU']
+                ws_rsu['H13'].value = available
+                ws_rsu['H14'].value = unvested
+                results.append(f"  OK    ALIGN RSU H13={available:,.2f}  H14={unvested:,.2f}")
+            except Exception as e:
+                results.append(f"  ERROR rsu_image ({fpath.name}): {e}")
+            continue
+
         try:
             sheets_data = read_file(ftype, fpath)
             for tname, data in sheets_data.items():
@@ -245,7 +290,6 @@ def main():
 
     wb.save()
 
-    # Update tracker for all processed files (new + unchanged)
     updated_tracker = {f.name: file_sig(f) for f in all_files}
     save_tracker(updated_tracker)
 
