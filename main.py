@@ -1,4 +1,4 @@
-# Klein Finance - Monthly Sheet Updater v7.3
+# Klein Finance - Monthly Sheet Updater v7.4
 import sys, shutil, datetime
 from pathlib import Path
 from collections import defaultdict
@@ -6,17 +6,59 @@ from collections import defaultdict
 BASE    = Path(__file__).parent
 MONTHLY = BASE / "MONTHLY"
 
-def detect_type(fname):
+DROR_POLICY = '35995836'
+LIAT_POLICY = '6650891010'
+
+def detect_by_name(fname):
     if fname.startswith('~'): return None
     name = fname.lower()
     if 'transaction-details' in name: return 'credit'
     if 'עוש' in name or 'לאומי' in name: return 'bank'
     if 'אחזקות' in name: return 'invest'
-    if 'התמונה המלאה' in name:
-        return 'pension_liat' if '(11)' in fname else 'pension_dror'
+    if 'התמונה המלאה' in name: return 'pension_check'  # content must confirm
     if '5647' in name or 'אישראכרט' in name: return 'isracard'
     if 'ריכוז' in name and 'יתרות' in name: return 'balance'
     return None
+
+def detect_by_content(fpath):
+    fname = fpath.name.lower()
+    is_xlsx = fname.endswith('.xlsx') or fname.endswith('.xls.xlsx')
+    is_xls  = fname.endswith('.xls') and not fname.endswith('.xls.xlsx')
+    try:
+        if is_xlsx:
+            import openpyxl
+            wb = openpyxl.load_workbook(fpath, read_only=True, data_only=True)
+            sheets = set(wb.sheetnames)
+            first_rows = list(wb[wb.sheetnames[0]].iter_rows(values_only=True))[:3]
+            wb.close()
+            if 'עסקאות במועד החיוב' in sheets or 'עסקאות חו"ל ומט"ח' in sheets:
+                return 'credit'
+            if 'פירוט עסקאות' in sheets:
+                return 'isracard'
+            if 'עוש' in sheets:
+                return 'bank'
+            for row in first_rows:
+                if any('מבט אישי' in str(v or '') for v in row):
+                    return 'invest'
+        elif is_xls:
+            import xlrd
+            wb = xlrd.open_workbook(fpath)
+            sheets = set(wb.sheet_names())
+            if 'פרטי המוצרים שלי' in sheets:
+                ws = wb.sheet_by_name('פרטי המוצרים שלי')
+                all_vals = ' '.join(str(ws.cell(r,c).value)
+                                    for r in range(ws.nrows) for c in range(ws.ncols))
+                if DROR_POLICY in all_vals: return 'pension_dror'
+                if LIAT_POLICY in all_vals: return 'pension_liat'
+    except:
+        pass
+    return None
+
+def detect(fpath):
+    by_name = detect_by_name(fpath.name)
+    if by_name == 'pension_check' or by_name is None:
+        return detect_by_content(fpath)
+    return by_name
 
 def clean_val(val):
     if isinstance(val, str):
@@ -43,7 +85,6 @@ def read_full_xls(path, sheet_name):
     return [[clean_val(ws.cell(r,c).value) for c in range(ws.ncols)] for r in range(ws.nrows)]
 
 def read_from_header(path, header_col0_value, sheet_name=None):
-    """Skip metadata rows at top; start writing from the real header row."""
     import openpyxl
     wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
     sname = sheet_name or wb.sheetnames[0]
@@ -60,8 +101,10 @@ def collect_files():
     typed = defaultdict(list)
     for f in MONTHLY.iterdir():
         if not f.is_file(): continue
-        t = detect_type(f.name)
-        if t: typed[t].append(f)
+        if f.suffix.lower() in ('.jpeg', '.jpg', '.png', '.xml'): continue
+        t = detect(f)
+        if t:
+            typed[t].append(f)
     for t in typed:
         typed[t].sort(key=lambda f: f.stat().st_mtime, reverse=True)
     return typed
@@ -103,11 +146,9 @@ def read_file(ftype, fpath):
         return {'ליאת - מסלקה': read_full_xls(fpath, 'פרטי המוצרים שלי')}
 
     elif ftype == 'isracard' and is_xlsx:
-        # Source has metadata rows above the real header — skip them
         return {'אישראכרט': read_from_header(fpath, 'תאריך רכישה')}
 
     elif ftype == 'balance' and is_xlsx:
-        # Source has 10 metadata rows above the real data — skip them
         return {'ריכוז יתרות לאומי': read_from_header(fpath, 'סוג פעילות')}
 
     return {}
@@ -123,7 +164,7 @@ def write_sheet(xw_wb, target_name, data):
         xw_wb.app.screen_updating = True
 
 def main():
-    print("\n  Klein Finance - Monthly Update v7.3")
+    print("\n  Klein Finance - Monthly Update v7.4")
     print("  =====================================")
 
     try:
@@ -172,7 +213,10 @@ def main():
         input("\n  Press Enter to close...")
         return
 
-    print(f"\n  Processing {sum(len(v) for v in typed.values())} file(s)...")
+    print(f"\n  Detected files:")
+    for ftype, files in typed.items():
+        print(f"    {ftype}: {files[0].name}")
+
     results = []
     target_sheet_names = [s.name for s in wb.sheets]
 
