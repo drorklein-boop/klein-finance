@@ -11,7 +11,7 @@ API_KEY_FILE = BASE / "api_key.txt"
 DROR_POLICY = '35995836'
 LIAT_POLICY = '6650891010'
 
-# ── Tracker ───────────────────────────────────────────────────────────────────
+# ââ Tracker âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def load_tracker():
     if TRACKER.exists():
@@ -33,18 +33,18 @@ def is_new(fpath, tracker):
     t = tracker[key]
     return t.get('mtime') != sig['mtime'] or t.get('size') != sig['size']
 
-# ── Detection ─────────────────────────────────────────────────────────────────
+# ââ Detection âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def detect_by_name(fname):
     if fname.startswith('~'): return None
     name = fname.lower()
     if name.endswith(('.jpeg','.jpg','.png')): return 'rsu_image'
     if 'transaction-details' in name: return 'credit'
-    if 'עוש' in name or 'לאומי' in name: return 'bank'
-    if 'אחזקות' in name: return 'invest'
-    if 'התמונה המלאה' in name: return 'pension_check'
-    if '5647' in name or 'אישראכרט' in name: return 'isracard'
-    if 'ריכוז' in name and 'יתרות' in name: return 'balance'
+    if '×¢××©' in name or '×××××' in name: return 'bank'
+    if '××××§××ª' in name: return 'invest'
+    if '××ª××× × ×××××' in name: return 'pension_check'
+    if '5647' in name or '×××©×¨×××¨×' in name: return 'isracard'
+    if '×¨××××' in name and '××ª×¨××ª' in name: return 'balance'
     return None
 
 def detect_by_content(fpath):
@@ -58,16 +58,16 @@ def detect_by_content(fpath):
             sheets = set(wb.sheetnames)
             first_rows = list(wb[wb.sheetnames[0]].iter_rows(values_only=True))[:3]
             wb.close()
-            if 'עסקאות במועד החיוב' in sheets or 'עסקאות חו"ל ומט"ח' in sheets: return 'credit'
-            if 'פירוט עסקאות' in sheets: return 'isracard'
-            if 'עוש' in sheets: return 'bank'
+            if '×¢×¡×§×××ª ××××¢× ×××××' in sheets or '×¢×¡×§×××ª ××"× ×××"×' in sheets: return 'credit'
+            if '×¤××¨×× ×¢×¡×§×××ª' in sheets: return 'isracard'
+            if '×¢××©' in sheets: return 'bank'
             for row in first_rows:
-                if any('מבט אישי' in str(v or '') for v in row): return 'invest'
+                if any('××× ×××©×' in str(v or '') for v in row): return 'invest'
         elif is_xls:
             import xlrd
             wb = xlrd.open_workbook(fpath)
-            if 'פרטי המוצרים שלי' in set(wb.sheet_names()):
-                ws = wb.sheet_by_name('פרטי המוצרים שלי')
+            if '×¤×¨×× ××××¦×¨×× ×©××' in set(wb.sheet_names()):
+                ws = wb.sheet_by_name('×¤×¨×× ××××¦×¨×× ×©××')
                 vals = ' '.join(str(ws.cell(r,c).value) for r in range(ws.nrows) for c in range(ws.ncols))
                 if DROR_POLICY in vals: return 'pension_dror'
                 if LIAT_POLICY in vals: return 'pension_liat'
@@ -80,7 +80,7 @@ def detect(fpath):
         return detect_by_content(fpath)
     return by_name
 
-# ── RSU via Anthropic API ─────────────────────────────────────────────────────
+# ââ RSU via Anthropic API âââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def read_rsu_from_image(img_path):
     try:
@@ -105,8 +105,8 @@ def read_rsu_from_image(img_path):
                 {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": img_b64}},
                 {"type": "text", "text": (
                     "This is an RSU portfolio screenshot. Extract exactly two numbers:\n"
-                    "1. זמין למימוש (available/vested) dollar amount\n"
-                    "2. טרם הבשיל (unvested) dollar amount\n"
+                    "1. ×××× ××××××© (available/vested) dollar amount\n"
+                    "2. ××¨× ×××©×× (unvested) dollar amount\n"
                     "Reply with JSON only, no explanation: {\"available\": 170600.00, \"unvested\": 187148.20}"
                 )}
             ]
@@ -115,7 +115,7 @@ def read_rsu_from_image(img_path):
     result = json.loads(msg.content[0].text)
     return float(result['available']), float(result['unvested'])
 
-# ── Reading ───────────────────────────────────────────────────────────────────
+# ââ Reading âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def clean_val(val):
     if isinstance(val, str):
@@ -161,29 +161,29 @@ def read_file(ftype, fpath):
         wb.close()
         return out
     elif ftype == 'bank' and is_xlsx:
-        return {'עוש': read_full_xlsx(fpath, 'עוש')}
+        return {'×¢××©': read_full_xlsx(fpath, '×¢××©')}
     elif ftype == 'invest' and is_xlsx:
         import openpyxl
         wb = openpyxl.load_workbook(fpath, read_only=True, data_only=True)
         for s in wb.sheetnames:
             first = next(wb[s].iter_rows(values_only=True), [])
-            if first and 'מבט אישי' in str(first[0] or ''):
+            if first and '××× ×××©×' in str(first[0] or ''):
                 data = [[clean_val(v) for v in row] for row in wb[s].iter_rows(values_only=True)]
                 wb.close()
-                return {'תיק השקעות עדכני': data}
+                return {'×ª××§ ××©×§×¢××ª ×¢××× ×': data}
         wb.close()
         return {}
     elif ftype == 'pension_dror' and is_xls:
-        return {'דרור - מסלקה': read_full_xls(fpath, 'פרטי המוצרים שלי')}
+        return {'××¨××¨ - ××¡××§×': read_full_xls(fpath, '×¤×¨×× ××××¦×¨×× ×©××')}
     elif ftype == 'pension_liat' and is_xls:
-        return {'ליאת - מסלקה': read_full_xls(fpath, 'פרטי המוצרים שלי')}
+        return {'××××ª - ××¡××§×': read_full_xls(fpath, '×¤×¨×× ××××¦×¨×× ×©××')}
     elif ftype == 'isracard' and is_xlsx:
-        return {'אישראכרט': read_from_header(fpath, 'תאריך רכישה')}
+        return {'×××©×¨×××¨×': read_from_header(fpath, '×ª××¨×× ×¨×××©×')}
     elif ftype == 'balance' and is_xlsx:
-        return {'ריכוז יתרות לאומי': read_from_header(fpath, 'סוג פעילות')}
+        return {'×¨×××× ××ª×¨××ª ×××××': read_from_header(fpath, '×¡×× ×¤×¢××××ª')}
     return {}
 
-# ── Write ─────────────────────────────────────────────────────────────────────
+# ââ Write âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def write_sheet(xw_wb, name, data):
     ws = xw_wb.sheets[name]
@@ -195,10 +195,10 @@ def write_sheet(xw_wb, name, data):
         xw_wb.app.calculation = 'automatic'
         xw_wb.app.screen_updating = True
 
-# ── Main ──────────────────────────────────────────────────────────────────────
+# ââ Main ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 def main():
-    print("\n  Klein Finance - Monthly Update v7.6")
+    print("\n  Klein Finance - Monthly Update v7.7")
     print("  =====================================")
 
     try:
@@ -218,9 +218,9 @@ def main():
         print("  ERROR: Excel is not open.")
         input("\n  Press Enter to close..."); return
 
-    wb = next((b for b in app.books if 'מאזן_קליין' in b.name), None)
+    wb = next((b for b in app.books if '××××_×§××××' in b.name), None)
     if not wb:
-        print("  ERROR: מאזן_קליין.xlsm not open.")
+        print("  ERROR: ××××_×§××××.xlsm not open.")
         input("\n  Press Enter to close..."); return
 
     print(f"  Workbook: {wb.name}")
@@ -228,9 +228,9 @@ def main():
     backup_dir = BASE / "backups"
     backup_dir.mkdir(exist_ok=True)
     ts = datetime.datetime.now().strftime("%Y-%m-%d_%H%M")
-    src = BASE / "מאזן_קליין.xlsm"
+    src = BASE / "××××_×§××××.xlsm"
     if src.exists():
-        shutil.copy2(src, backup_dir / f"מאזן_{ts}.xlsm")
+        shutil.copy2(src, backup_dir / f"××××_{ts}.xlsm")
         print("  Backup saved")
 
     tracker = load_tracker()
@@ -266,7 +266,7 @@ def main():
     for ftype, files in typed.items():
         fpath = files[0]
 
-        # RSU image — special handling
+        # RSU image â special handling
         if ftype == 'rsu_image':
             try:
                 available, unvested = read_rsu_from_image(fpath)
