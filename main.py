@@ -189,7 +189,7 @@ def write_sheet(xw_wb, name, data):
         xw_wb.app.screen_updating = True
 
 def main():
-    print("\n  Klein Finance - Monthly Update v7.9")
+    print("\n  Klein Finance - Monthly Update v8.0")
     print("  =====================================")
 
     try:
