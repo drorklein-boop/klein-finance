@@ -195,7 +195,7 @@ def read_file(ftype, fpath):
         if 'תאריך רכישה' in combined.columns:
             combined['תאריך רכישה'] = pd.to_datetime(combined['תאריך רכישה'], format='mixed', dayfirst=True, errors='coerce')
             combined = combined.sort_values('תאריך רכישה', ascending=True)
-        sheet_cols = ['תאריך רכישה', 'שם בית עסק', 'סכום עסקה', 'מטבע עסקה', 'סכום חיוב', 'מטבע חיוב', "מס' שובר", 'פירוט נוסף', 'קטגוריה']
+        sheet_cols = ['תאריך רכישה', 'שם בית עסק', 'סכום עסקה', 'מטבע עסקה', 'סכום חיוב', 'מטבע חיוב', "מס' שובר", 'פירוט נוסף']
         for col in sheet_cols:
             if col not in combined.columns:
                 combined[col] = None
@@ -208,7 +208,7 @@ def read_file(ftype, fpath):
 def write_sheet(xw_wb, name, data):
     ws = xw_wb.sheets[name]
     if name == 'אישראכרט':
-        ws.range('A2:Z10000').clear_contents()
+        ws.range('A2:H10000').clear_contents()
         if data:
             xw_wb.app.screen_updating = False
             xw_wb.app.calculation = 'manual'
