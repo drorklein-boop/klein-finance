@@ -1,4 +1,4 @@
-# Klein Finance - Monthly Sheet Updater v7.9
+# Klein Finance - Monthly Sheet Updater v8.0
 import sys, shutil, datetime, json, base64, re
 from pathlib import Path
 from collections import defaultdict
@@ -173,20 +173,55 @@ def read_file(ftype, fpath):
     elif ftype == 'pension_liat' and is_xls:
         return {'ליאת - מסלקה': read_full_xls(fpath, 'פרטי המוצרים שלי')}
     elif ftype == 'isracard' and is_xlsx:
-        return {'אישראכרט': read_from_header(fpath, 'תאריך רכישה')}
+        import pandas as pd
+        isr_files = sorted(
+            [f for f in MONTHLY.glob('*.xls*') if '5647' in f.name or 'אישראכרט' in f.name],
+            key=lambda f: f.stat().st_mtime
+        )
+        frames = []
+        for ipath in isr_files:
+            rows = read_from_header(ipath, 'תאריך רכישה')
+            if len(rows) < 2:
+                continue
+            df = pd.DataFrame(rows[1:], columns=rows[0])
+            frames.append(df)
+        if not frames:
+            return {}
+        combined = pd.concat(frames, ignore_index=True)
+        key_cols = [col for col in ["מס' שובר", 'תאריך רכישה', 'סכום עסקה'] if col in combined.columns]
+        if key_cols:
+            combined = combined.drop_duplicates(subset=key_cols)
+        if 'תאריך רכישה' in combined.columns:
+            combined['תאריך רכישה'] = pd.to_datetime(combined['תאריך רכישה'], dayfirst=True, errors='coerce')
+            combined = combined.sort_values('תאריך רכישה', ascending=True)
+        sheet_cols = ['תאריך רכישה', 'שם בית עסק', 'סכום עסקה', 'מטבע עסקה', 'סכום חיוב', 'מטבע חיוב', "מס' שובר", 'פירוט נוסף', 'קטגוריה']
+        for col in sheet_cols:
+            if col not in combined.columns:
+                combined[col] = None
+        combined = combined[sheet_cols]
+        return {'אישראכרט': combined.values.tolist()}
     elif ftype == 'balance' and is_xlsx:
         return {'ריכוז יתרות לאומי': read_from_header(fpath, 'סוג פעילות')}
     return {}
 
 def write_sheet(xw_wb, name, data):
     ws = xw_wb.sheets[name]
-    ws.clear_contents()
-    if data:
-        xw_wb.app.screen_updating = False
-        xw_wb.app.calculation = 'manual'
-        ws.range('A1').value = data
-        xw_wb.app.calculation = 'automatic'
-        xw_wb.app.screen_updating = True
+    if name == 'אישראכרט':
+        ws.range('A2:Z10000').clear_contents()
+        if data:
+            xw_wb.app.screen_updating = False
+            xw_wb.app.calculation = 'manual'
+            ws.range('A2').value = data
+            xw_wb.app.calculation = 'automatic'
+            xw_wb.app.screen_updating = True
+    else:
+        ws.clear_contents()
+        if data:
+            xw_wb.app.screen_updating = False
+            xw_wb.app.calculation = 'manual'
+            ws.range('A1').value = data
+            xw_wb.app.calculation = 'automatic'
+            xw_wb.app.screen_updating = True
 
 def main():
     print("\n  Klein Finance - Monthly Update v8.0")
