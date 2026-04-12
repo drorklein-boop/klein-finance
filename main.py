@@ -1,5 +1,6 @@
 # Klein Finance - Monthly Sheet Updater v8.0
-import sys, shutil, datetime, json, base64, re
+import sys, shutil, datetime, json, base64, re, warnings
+warnings.filterwarnings('ignore')
 from pathlib import Path
 from collections import defaultdict
 
@@ -192,7 +193,7 @@ def read_file(ftype, fpath):
         if key_cols:
             combined = combined.drop_duplicates(subset=key_cols)
         if 'תאריך רכישה' in combined.columns:
-            combined['תאריך רכישה'] = pd.to_datetime(combined['תאריך רכישה'], dayfirst=True, errors='coerce')
+            combined['תאריך רכישה'] = pd.to_datetime(combined['תאריך רכישה'], format='mixed', dayfirst=True, errors='coerce')
             combined = combined.sort_values('תאריך רכישה', ascending=True)
         sheet_cols = ['תאריך רכישה', 'שם בית עסק', 'סכום עסקה', 'מטבע עסקה', 'סכום חיוב', 'מטבע חיוב', "מס' שובר", 'פירוט נוסף', 'קטגוריה']
         for col in sheet_cols:
