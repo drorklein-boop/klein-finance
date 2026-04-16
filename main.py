@@ -37,7 +37,7 @@ def detect_by_name(fname):
     name = fname.lower()
     if name.endswith(('.jpeg','.jpg','.png')): return 'rsu_image'
     if 'transaction-details' in name: return 'credit'
-    if 'עוש' in name or 'לאומי' in name: return 'bank'
+    if 'עוש' in name or 'לאומי' in name or 'תנועות בחשבון' in name: return 'bank'
     if 'אחזקות' in name: return 'invest'
     if 'התמונה המלאה' in name: return 'pension_check'
     if '5647' in name or 'אישראכרט' in name: return 'isracard'
@@ -63,6 +63,7 @@ def detect_by_content(fpath):
         elif is_xls:
             import xlrd
             wb = xlrd.open_workbook(fpath)
+            if any('תנועות בחשבון' in s for s in wb.sheet_names()): return 'bank'
             if 'פרטי המוצרים שלי' in set(wb.sheet_names()):
                 ws = wb.sheet_by_name('פרטי המוצרים שלי')
                 vals = ' '.join(str(ws.cell(r,c).value) for r in range(ws.nrows) for c in range(ws.ncols))
@@ -158,6 +159,12 @@ def read_file(ftype, fpath):
         return out
     elif ftype == 'bank' and is_xlsx:
         return {'עוש': read_full_xlsx(fpath, 'עוש')}
+    elif ftype == 'bank' and is_xls:
+        import xlrd
+        wb2 = xlrd.open_workbook(fpath)
+        sheet = next((s for s in wb2.sheet_names() if 'תנועות בחשבון' in s), None)
+        if sheet is None: return {}
+        return {'עוש': read_full_xls(fpath, sheet)}
     elif ftype == 'invest' and is_xlsx:
         import openpyxl
         wb = openpyxl.load_workbook(fpath, read_only=True, data_only=True)
