@@ -58,6 +58,7 @@ def detect_by_content(fpath):
             if 'עסקאות במועד החיוב' in sheets or 'עסקאות חו״ל ומט״ח' in sheets: return 'credit'
             if 'פירוט עסקאות' in sheets: return 'isracard'
             if 'עוש' in sheets: return 'bank'
+            if any('תנועות בחשבון' in s for s in sheets): return 'bank'
             for row in first_rows:
                 if any('מבט אישי' in str(v or '') for v in row): return 'invest'
         elif is_xls:
