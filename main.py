@@ -158,7 +158,15 @@ def read_file(ftype, fpath):
         wb.close()
         return out
     elif ftype == 'bank' and is_xlsx:
-        return {'עוש': read_full_xlsx(fpath, 'עוש')}
+        import openpyxl as _ox
+        _wb = _ox.load_workbook(fpath, read_only=True, data_only=True)
+        _sheets = _wb.sheetnames
+        _wb.close()
+        if 'עוש' in _sheets:
+            return {'עוש': read_full_xlsx(fpath, 'עוש')}
+        _sheet = next((s for s in _sheets if 'תנועות בחשבון' in s), None)
+        if _sheet is None: return {}
+        return {'עוש': read_full_xlsx(fpath, _sheet)}
     elif ftype == 'bank' and is_xls:
         import xlrd
         wb2 = xlrd.open_workbook(fpath)
