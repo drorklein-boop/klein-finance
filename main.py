@@ -1,4 +1,4 @@
-# Klein Finance - Monthly Sheet Updater v8.7
+# Klein Finance - Monthly Sheet Updater v8.8
 import sys, shutil, datetime, json, base64, re, warnings
 warnings.filterwarnings('ignore')
 from pathlib import Path
@@ -261,6 +261,24 @@ def read_file(ftype, fpath):
     return {}
 
 
+def write_rsu_tranche_table(wb):
+    ws = wb.sheets['ALIGN RSU']
+    # Only write if table header is not already there
+    if ws['A17'].value is not None:
+        return
+    header = ['Allocation Date', 'Granted', 'Vested Shares', 'Unvested Shares', 'Holding Period 102', 'Est. Sellable Value ($)']
+    rows = [
+        ['2021-02-01', 76,   76,  0,    'Lapse',      12416.88],
+        ['2022-02-20', 99,   99,  0,    'Lapse',      16174.62],
+        ['2023-02-20', 326,  245, 81,   'Lapse',      40028.10],
+        ['2024-02-20', 724,  362, 362,  'Lapse',      59143.56],
+        ['2025-02-20', 872,  218, 654,  '2027-02-20', 35616.83],
+        ['2026-02-20', 1054, 0,   1054, '2028-02-20', 0.00],
+    ]
+    ws['A17'].value = header
+    ws['A18'].value = rows
+    print('  RSU tranche table written to ALIGN RSU A17:F23')
+
 def write_sheet(xw_wb, name, data):
     ws = xw_wb.sheets[name]
     if name == 'אישראכרט':
@@ -281,7 +299,7 @@ def write_sheet(xw_wb, name, data):
             xw_wb.app.screen_updating = True
 
 def main():
-    print("\n  Klein Finance - Monthly Update v8.7")
+    print("\n  Klein Finance - Monthly Update v8.8")
     print("  =====================================")
 
     try:
@@ -308,6 +326,7 @@ def main():
         input("\n  Press Enter to close..."); return
 
     print(f"  Workbook found: {wb.name}")
+    write_rsu_tranche_table(wb)
 
     backup_dir = BASE / "backups"
     backup_dir.mkdir(exist_ok=True)
