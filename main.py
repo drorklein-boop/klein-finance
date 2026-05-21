@@ -1,4 +1,4 @@
-# Klein Finance - Monthly Sheet Updater v8.5
+# Klein Finance - Monthly Sheet Updater v8.6
 import sys, shutil, datetime, json, base64, re, warnings
 warnings.filterwarnings('ignore')
 from pathlib import Path
@@ -111,16 +111,14 @@ def read_rsu_from_image(img_path):
             "content": [
                 {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": img_b64}},
                 {"type": "text", "text": (
-                    "This is a brokerage screenshot showing RSU (Restricted Stock Unit) holdings.\n"
-                    "Find two dollar amounts shown in the image:\n"
-                    "1. AVAILABLE or VESTED amount (labeled zamin lemimoosh or available for exercise)\n"
-                    "2. UNVESTED amount (labeled trem hivshil or not yet vested)\n"
-                    "Read the actual dollar figures visible in the screenshot. Do not copy example numbers.\n"
+                    "This is a screenshot from the Leumi brokerage app showing an RSU summary for Align Technology.\n"
+                    "The image has a dark background and shows two Hebrew labels with dollar amounts:\n"
+                    "- The label zamin lemimoosh (זמין למימוש) with a green dot — this is the AVAILABLE/VESTED amount\n"
+                    "- The label trem hivshil (טרם הבשיל) with a blue dot — this is the UNVESTED amount\n"
+                    "Find both dollar amounts next to those two Hebrew labels.\n"
+                    "Ignore any other numbers on the screen such as the total or individual tranche values.\n"
                     'Return ONLY valid JSON, no markdown, no explanation: {"available": 0.00, "unvested": 0.00}'
                 )}
-            ]
-        }]
-    )
     raw = msg.content[0].text.strip()
     raw = re.sub(r'^[`]{3}[a-z]*\s*', '', raw)
     raw = re.sub(r'\s*[`]{3}$', '', raw)
@@ -280,7 +278,7 @@ def write_sheet(xw_wb, name, data):
             xw_wb.app.screen_updating = True
 
 def main():
-    print("\n  Klein Finance - Monthly Update v8.5")
+    print("\n  Klein Finance - Monthly Update v8.6")
     print("  =====================================")
 
     try:
