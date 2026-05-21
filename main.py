@@ -1,4 +1,4 @@
-# Klein Finance - Monthly Sheet Updater v8.0
+# Klein Finance - Monthly Sheet Updater v8.1
 import sys, shutil, datetime, json, base64, re, warnings
 warnings.filterwarnings('ignore')
 from pathlib import Path
@@ -89,8 +89,18 @@ def read_rsu_from_image(img_path):
 
     api_key = API_KEY_FILE.read_text().strip()
     img_b64 = base64.standard_b64encode(img_path.read_bytes()).decode()
-    ext = img_path.suffix.lower().lstrip('.')
-    media_type = 'image/jpeg' if ext in ('jpg','jpeg') else f'image/{ext}'
+    raw_bytes = img_path.read_bytes()
+    if raw_bytes[:3] == b'\xff\xd8\xff':
+        media_type = 'image/jpeg'
+    elif raw_bytes[:4] == b'\x89PNG':
+        media_type = 'image/png'
+    elif raw_bytes[:4] == b'GIF8':
+        media_type = 'image/gif'
+    elif raw_bytes[:4] == b'RIFF' and raw_bytes[8:12] == b'WEBP':
+        media_type = 'image/webp'
+    else:
+        ext = img_path.suffix.lower().lstrip('.')
+        media_type = 'image/jpeg' if ext in ('jpg','jpeg') else f'image/{ext}'
 
     client = anthropic.Anthropic(api_key=api_key)
     msg = client.messages.create(
@@ -241,7 +251,7 @@ def write_sheet(xw_wb, name, data):
             xw_wb.app.screen_updating = True
 
 def main():
-    print("\n  Klein Finance - Monthly Update v8.0")
+    print("\n  Klein Finance - Monthly Update v8.1")
     print("  =====================================")
 
     try:
