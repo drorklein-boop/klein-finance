@@ -1,4 +1,4 @@
-# Klein Finance - Monthly Sheet Updater v8.9
+# Klein Finance - Monthly Sheet Updater v8.10
 import sys, shutil, datetime, json, base64, re, warnings
 warnings.filterwarnings('ignore')
 from pathlib import Path
@@ -125,9 +125,11 @@ def read_rsu_from_image(img_path):
         }]
     )
     raw = msg.content[0].text.strip()
-    raw = re.sub(r'^[`]{3}[a-z]*\s*', '', raw)
-    raw = re.sub(r'\s*[`]{3}$', '', raw)
-    result = json.loads(raw.strip())
+    raw = re.sub(r'^```[a-z]*\s*', '', raw)
+    raw = re.sub(r'\s*```$', '', raw)
+    raw = raw.strip()
+    print(f"  RSU model returned: {repr(raw[:300])}")
+    result = json.loads(raw)
     return float(result['available']), float(result['unvested'])
 
 def clean_val(val):
@@ -245,21 +247,34 @@ def read_file(ftype, fpath):
                 tables = pd.read_html(str(fpath), encoding='windows-1255')
             except Exception:
                 return {}
+        print(f"  HTM: found {len(tables)} table(s)")
+        for i, tbl in enumerate(tables):
+            print(f"  HTM table {i}: cols={list(tbl.columns)[:5]}  rows={len(tbl)}")
         if ftype == 'bank':
-            bank_key_cols = ['\u05ea\u05d0\u05e8\u05d9\u05db', '\u05e1\u05d5\u05d2 \u05ea\u05e0\u05d5\u05e2\u05d4', '\u05d7\u05d5\u05d1\u05d4', '\u05d6\u05db\u05d5\u05ea', '\u05d9\u05ea\u05e8\u05d4 \u05de\u05e6\u05d8\u05d1\u05e8\u05ea']
+            bank_key = ['תאריך', 'סוג תנועה', 'חובה', 'זכות', 'יתרה מצטברת']
             for tbl in tables:
                 col_str = str(tbl.columns.tolist())
-                if any(col in col_str for col in bank_key_cols):
-                    keep = ['\u05d9\u05ea\u05e8\u05d4 \u05de\u05e6\u05d8\u05d1\u05e8\u05ea', '\u05d7\u05d5\u05d1\u05d4', '\u05d6\u05db\u05d5\u05ea', '\u05e1\u05d5\u05d2 \u05ea\u05e0\u05d5\u05e2\u05d4', '\u05ea\u05d0\u05e8\u05d9\u05db']
-                    cols = [col for col in keep if col in tbl.columns]
+                if any(col in col_str for col in bank_key):
+                    keep = ['יתרה מצטברת', 'חובה', 'זכות', 'סוג תנועה', 'תאריך']
+                    cols = [c for c in keep if c in tbl.columns]
                     tbl = tbl[cols].dropna(how='all')
-                    return {'\u05e2\u05d5\u05e9': [tbl.columns.tolist()] + tbl.values.tolist()}
+                    return {'עוש': [tbl.columns.tolist()] + tbl.values.tolist()}
+            # Fallback: largest table with >5 rows
+            big = sorted(tables, key=len, reverse=True)
+            if big and len(big[0]) > 5:
+                t = big[0].dropna(how='all')
+                return {'עוש': [t.columns.tolist()] + t.values.tolist()}
         if ftype == 'balance':
+            balance_key = ['סוג פעילות', 'עובר ושב', 'ניירות ערך']
             for tbl in tables:
-                flat_vals = ' '.join(str(v) for v in tbl.iloc[:,0].tolist())
+                flat = ' '.join(str(v) for v in tbl.values.flatten())
                 col_str = str(tbl.columns.tolist())
-                if '\u05e1\u05d5\u05d2 \u05e4\u05e2\u05d9\u05dc\u05d5\u05ea' in col_str or '\u05e2\u05d5\u05d1\u05e8 \u05d5\u05e9\u05d1' in flat_vals or '\u05e0\u05d9\u05d9\u05e8\u05d5\u05ea \u05e2\u05e8\u05da' in flat_vals:
-                    return {'\u05e8\u05d9\u05db\u05d5\u05d6 \u05d9\u05ea\u05e8\u05d5\u05ea \u05dc\u05d0\u05d5\u05de\u05d9': [tbl.columns.tolist()] + tbl.values.tolist()}
+                if any(k in col_str or k in flat for k in balance_key):
+                    return {'ריכוז יתרות לאומי': [tbl.columns.tolist()] + tbl.values.tolist()}
+            # Fallback: first table with at least 3 rows
+            if tables:
+                t = tables[0].dropna(how='all')
+                return {'ריכוז יתרות לאומי': [t.columns.tolist()] + t.values.tolist()}
     return {}
 
 
@@ -301,7 +316,7 @@ def write_sheet(xw_wb, name, data):
             xw_wb.app.screen_updating = True
 
 def main():
-    print("\n  Klein Finance - Monthly Update v8.9")
+    print("\n  Klein Finance - Monthly Update v8.10")
     print("  =====================================")
 
     try:
