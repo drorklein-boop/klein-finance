@@ -1,4 +1,4 @@
-# Klein Finance - Monthly Sheet Updater v8.1
+# Klein Finance - Monthly Sheet Updater v8.2
 import sys, shutil, datetime, json, base64, re, warnings
 warnings.filterwarnings('ignore')
 from pathlib import Path
@@ -229,7 +229,34 @@ def read_file(ftype, fpath):
         return {'אישראכרט': combined.values.tolist()}
     elif ftype == 'balance' and is_xlsx:
         return {'ריכוז יתרות לאומי': read_from_header(fpath, 'סוג פעילות')}
+    # HTM/HTML fallback for bank statement and balance files
+    is_htm = fname.endswith('.htm') or fname.endswith('.html')
+    if is_htm:
+        import pandas as pd
+        try:
+            tables = pd.read_html(str(fpath), encoding='utf-8')
+        except Exception:
+            try:
+                tables = pd.read_html(str(fpath), encoding='windows-1255')
+            except Exception:
+                return {}
+        if ftype == 'bank':
+            bank_key_cols = ['\u05ea\u05d0\u05e8\u05d9\u05db', '\u05e1\u05d5\u05d2 \u05ea\u05e0\u05d5\u05e2\u05d4', '\u05d7\u05d5\u05d1\u05d4', '\u05d6\u05db\u05d5\u05ea', '\u05d9\u05ea\u05e8\u05d4 \u05de\u05e6\u05d8\u05d1\u05e8\u05ea']
+            for tbl in tables:
+                col_str = str(tbl.columns.tolist())
+                if any(col in col_str for col in bank_key_cols):
+                    keep = ['\u05d9\u05ea\u05e8\u05d4 \u05de\u05e6\u05d8\u05d1\u05e8\u05ea', '\u05d7\u05d5\u05d1\u05d4', '\u05d6\u05db\u05d5\u05ea', '\u05e1\u05d5\u05d2 \u05ea\u05e0\u05d5\u05e2\u05d4', '\u05ea\u05d0\u05e8\u05d9\u05db']
+                    cols = [col for col in keep if col in tbl.columns]
+                    tbl = tbl[cols].dropna(how='all')
+                    return {'\u05e2\u05d5\u05e9': [tbl.columns.tolist()] + tbl.values.tolist()}
+        if ftype == 'balance':
+            for tbl in tables:
+                flat_vals = ' '.join(str(v) for v in tbl.iloc[:,0].tolist())
+                col_str = str(tbl.columns.tolist())
+                if '\u05e1\u05d5\u05d2 \u05e4\u05e2\u05d9\u05dc\u05d5\u05ea' in col_str or '\u05e2\u05d5\u05d1\u05e8 \u05d5\u05e9\u05d1' in flat_vals or '\u05e0\u05d9\u05d9\u05e8\u05d5\u05ea \u05e2\u05e8\u05da' in flat_vals:
+                    return {'\u05e8\u05d9\u05db\u05d5\u05d6 \u05d9\u05ea\u05e8\u05d5\u05ea \u05dc\u05d0\u05d5\u05de\u05d9': [tbl.columns.tolist()] + tbl.values.tolist()}
     return {}
+
 
 def write_sheet(xw_wb, name, data):
     ws = xw_wb.sheets[name]
@@ -251,7 +278,7 @@ def write_sheet(xw_wb, name, data):
             xw_wb.app.screen_updating = True
 
 def main():
-    print("\n  Klein Finance - Monthly Update v8.1")
+    print("\n  Klein Finance - Monthly Update v8.2")
     print("  =====================================")
 
     try:
