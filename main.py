@@ -1,4 +1,4 @@
-# Klein Finance - Monthly Sheet Updater v8.6
+# Klein Finance - Monthly Sheet Updater v8.7
 import sys, shutil, datetime, json, base64, re, warnings
 warnings.filterwarnings('ignore')
 from pathlib import Path
@@ -113,12 +113,15 @@ def read_rsu_from_image(img_path):
                 {"type": "text", "text": (
                     "This is a screenshot from the Leumi brokerage app showing an RSU summary for Align Technology.\n"
                     "The image has a dark background and shows two Hebrew labels with dollar amounts:\n"
-                    "- The label zamin lemimoosh (זמין למימוש) with a green dot — this is the AVAILABLE/VESTED amount\n"
-                    "- The label trem hivshil (טרם הבשיל) with a blue dot — this is the UNVESTED amount\n"
-                    "Find both dollar amounts next to those two Hebrew labels.\n"
-                    "Ignore any other numbers on the screen such as the total or individual tranche values.\n"
+                    "- The label zamin lemimoosh with a green dot: this is the AVAILABLE/VESTED amount\n"
+                    "- The label trem hivshil with a blue dot: this is the UNVESTED amount\n"
+                    "Find the dollar amounts next to those two labels only.\n"
+                    "Ignore the large total at the top and ignore any tranche table rows.\n"
                     'Return ONLY valid JSON, no markdown, no explanation: {"available": 0.00, "unvested": 0.00}'
                 )}
+            ]
+        }]
+    )
     raw = msg.content[0].text.strip()
     raw = re.sub(r'^[`]{3}[a-z]*\s*', '', raw)
     raw = re.sub(r'\s*[`]{3}$', '', raw)
@@ -278,7 +281,7 @@ def write_sheet(xw_wb, name, data):
             xw_wb.app.screen_updating = True
 
 def main():
-    print("\n  Klein Finance - Monthly Update v8.6")
+    print("\n  Klein Finance - Monthly Update v8.7")
     print("  =====================================")
 
     try:
