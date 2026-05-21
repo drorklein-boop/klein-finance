@@ -1,4 +1,4 @@
-# Klein Finance - Monthly Sheet Updater v8.3
+# Klein Finance - Monthly Sheet Updater v8.4
 import sys, shutil, datetime, json, base64, re, warnings
 warnings.filterwarnings('ignore')
 from pathlib import Path
@@ -111,23 +111,12 @@ def read_rsu_from_image(img_path):
             "content": [
                 {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": img_b64}},
                 {"type": "text", "text": (
-                    "This is an RSU portfolio screenshot. Find two dollar amounts:\n"
-                    "1. available/vested (zamin lemimoosh)\n"
-                    "2. unvested (trem hivshil)\n"
-                    'Return ONLY this JSON with no markdown, no explanation: {"available": 170600.00, "unvested": 187148.20}'
-                )}
-            ]
-        }]
-    )
-    raw = msg.content[0].text.strip()
-    raw = re.sub(r'^```[a-z]*\s*', '', raw)
-    raw = re.sub(r'\s*```$', '', raw)
-    result = json.loads(raw.strip())
-    return float(result['available']), float(result['unvested'])
-
-def clean_val(val):
-    if isinstance(val, str):
-        for ch in ('\u200e','\u200f','\u202b','\u202c'): val = val.replace(ch,'')
+                    "This is a brokerage screenshot showing RSU holdings.\n"
+                                        "Find two dollar amounts in the image:\n"
+                                        "1. AVAILABLE/VESTED: labeled zamin lemimoosh / available for exercise)\n"
+                                        "2. UNVESTED: labeled trem hivshil or not yet vested\n"
+                                        "Read the actual numbers from the image. Do not use example numbers.\n"
+                                        'Return ONLY valid JSON, no markdown: {"available": 0.00, "unvested": 0.00}': val = val.replace(ch,'')
         val = val.strip()
         try: return float(val.replace(',',''))
         except: return val if val else None
@@ -278,7 +267,7 @@ def write_sheet(xw_wb, name, data):
             xw_wb.app.screen_updating = True
 
 def main():
-    print("\n  Klein Finance - Monthly Update v8.3")
+    print("\n  Klein Finance - Monthly Update v8.4")
     print("  =====================================")
 
     try:
@@ -316,8 +305,9 @@ def main():
 
     tracker = load_tracker()
     # Self-heal: remove any .htm/.html entries from tracker so they always re-check
-    htm_names = {f.name for f in MONTHLY.iterdir() if f.suffix.lower() in ('.htm', '.html')}
-    tracker = {k: v for k, v in tracker.items() if k not in htm_names}
+    recheck_exts = {'.htm', '.html', '.jpeg', '.jpg', '.png', '.webp', '.gif'}
+    recheck_names = {f.name for f in MONTHLY.iterdir() if f.suffix.lower() in recheck_exts}
+    tracker = {k: v for k, v in tracker.items() if k not in recheck_names}
     all_files = [f for f in MONTHLY.iterdir()
                  if f.is_file() and not f.name.startswith('~')
                  and f.suffix.lower() not in ('.xml',)]
