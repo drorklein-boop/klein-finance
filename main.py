@@ -1,4 +1,4 @@
-# Klein Finance - Monthly Sheet Updater v8.2
+# Klein Finance - Monthly Sheet Updater v8.3
 import sys, shutil, datetime, json, base64, re, warnings
 warnings.filterwarnings('ignore')
 from pathlib import Path
@@ -278,7 +278,7 @@ def write_sheet(xw_wb, name, data):
             xw_wb.app.screen_updating = True
 
 def main():
-    print("\n  Klein Finance - Monthly Update v8.2")
+    print("\n  Klein Finance - Monthly Update v8.3")
     print("  =====================================")
 
     try:
@@ -315,6 +315,9 @@ def main():
         print("  Backup saved")
 
     tracker = load_tracker()
+    # Self-heal: remove any .htm/.html entries from tracker so they always re-check
+    htm_names = {f.name for f in MONTHLY.iterdir() if f.suffix.lower() in ('.htm', '.html')}
+    tracker = {k: v for k, v in tracker.items() if k not in htm_names}
     all_files = [f for f in MONTHLY.iterdir()
                  if f.is_file() and not f.name.startswith('~')
                  and f.suffix.lower() not in ('.xml',)]
@@ -359,12 +362,17 @@ def main():
             continue
         try:
             sheets_data = read_file(ftype, fpath)
+            wrote_any = False
             for tname, data in sheets_data.items():
                 if tname not in target_sheets:
                     results.append(f"  SKIP  '{tname}' not in workbook"); continue
                 write_sheet(wb, tname, data)
                 results.append(f"  OK    {tname} ({len(data)} rows)")
-            successfully_processed.add(fpath.name)
+                wrote_any = True
+            if wrote_any:
+                successfully_processed.add(fpath.name)
+            elif not sheets_data:
+                results.append(f"  WARN  {ftype} ({fpath.name}): no data returned — will retry next run")
         except Exception as e:
             results.append(f"  ERROR {ftype} ({fpath.name}): {e}")
 
