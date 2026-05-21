@@ -111,12 +111,25 @@ def read_rsu_from_image(img_path):
             "content": [
                 {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": img_b64}},
                 {"type": "text", "text": (
-                    "This is a brokerage screenshot showing RSU holdings.\n"
-                                        "Find two dollar amounts in the image:\n"
-                                        "1. AVAILABLE/VESTED: labeled zamin lemimoosh / available for exercise)\n"
-                                        "2. UNVESTED: labeled trem hivshil or not yet vested\n"
-                                        "Read the actual numbers from the image. Do not use example numbers.\n"
-                                        'Return ONLY valid JSON, no markdown: {"available": 0.00, "unvested": 0.00}': val = val.replace(ch,'')
+                    "This is a brokerage screenshot showing RSU (Restricted Stock Unit) holdings.\n"
+                    "Find two dollar amounts shown in the image:\n"
+                    "1. AVAILABLE or VESTED amount (labeled zamin lemimoosh or available for exercise)\n"
+                    "2. UNVESTED amount (labeled trem hivshil or not yet vested)\n"
+                    "Read the actual dollar figures visible in the screenshot. Do not copy example numbers.\n"
+                    'Return ONLY valid JSON, no markdown, no explanation: {"available": 0.00, "unvested": 0.00}'
+                )}
+            ]
+        }]
+    )
+    raw = msg.content[0].text.strip()
+    raw = re.sub(r'^[`]{3}[a-z]*\s*', '', raw)
+    raw = re.sub(r'\s*[`]{3}$', '', raw)
+    result = json.loads(raw.strip())
+    return float(result['available']), float(result['unvested'])
+
+def clean_val(val):
+    if isinstance(val, str):
+        for ch in ('\u200e','\u200f','\u202b','\u202c'): val = val.replace(ch,'')
         val = val.strip()
         try: return float(val.replace(',',''))
         except: return val if val else None
