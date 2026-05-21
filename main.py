@@ -1,4 +1,4 @@
-# Klein Finance - Monthly Sheet Updater v8.10
+# Klein Finance - Monthly Sheet Updater v8.11
 import sys, shutil, datetime, json, base64, re, warnings
 warnings.filterwarnings('ignore')
 from pathlib import Path
@@ -129,8 +129,18 @@ def read_rsu_from_image(img_path):
     raw = re.sub(r'\s*```$', '', raw)
     raw = raw.strip()
     print(f"  RSU model returned: {repr(raw[:300])}")
-    result = json.loads(raw)
-    return float(result['available']), float(result['unvested'])
+    try:
+        result = json.loads(raw)
+        return float(result['available']), float(result['unvested'])
+    except Exception:
+        # Fallback: extract any dollar amounts from free text
+        import re as _re
+        nums = [float(n.replace(',','')) for n in _re.findall(r'[\d][\d,]*\.\d+', raw)]
+        nums = [n for n in nums if n > 1000]  # filter noise
+        if len(nums) >= 2:
+            print(f"  RSU fallback extracted: {nums[:2]}")
+            return nums[0], nums[1]
+        raise ValueError(f"Could not extract RSU values from: {repr(raw[:200])}")
 
 def clean_val(val):
     if isinstance(val, str):
@@ -242,11 +252,19 @@ def read_file(ftype, fpath):
         import pandas as pd
         try:
             tables = pd.read_html(str(fpath), encoding='utf-8')
-        except Exception:
+        except Exception as e1:
+            print(f"  HTM utf-8 failed: {e1}")
             try:
                 tables = pd.read_html(str(fpath), encoding='windows-1255')
-            except Exception:
-                return {}
+            except Exception as e2:
+                print(f"  HTM windows-1255 failed: {e2}")
+                try:
+                    raw_html = fpath.read_bytes().decode('windows-1255', errors='replace')
+                    import io
+                    tables = pd.read_html(io.StringIO(raw_html))
+                except Exception as e3:
+                    print(f"  HTM StringIO failed: {e3}")
+                    return {}
         print(f"  HTM: found {len(tables)} table(s)")
         for i, tbl in enumerate(tables):
             print(f"  HTM table {i}: cols={list(tbl.columns)[:5]}  rows={len(tbl)}")
@@ -316,7 +334,7 @@ def write_sheet(xw_wb, name, data):
             xw_wb.app.screen_updating = True
 
 def main():
-    print("\n  Klein Finance - Monthly Update v8.10")
+    print("\n  Klein Finance - Monthly Update v8.11")
     print("  =====================================")
 
     try:
