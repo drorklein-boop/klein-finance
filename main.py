@@ -1,4 +1,4 @@
-# Klein Finance - Monthly Sheet Updater v8.11
+# Klein Finance - Monthly Sheet Updater v8.12
 import sys, shutil, datetime, json, base64, re, warnings
 warnings.filterwarnings('ignore')
 from pathlib import Path
@@ -334,7 +334,7 @@ def write_sheet(xw_wb, name, data):
             xw_wb.app.screen_updating = True
 
 def main():
-    print("\n  Klein Finance - Monthly Update v8.11")
+    print("\n  Klein Finance - Monthly Update v8.12")
     print("  =====================================")
 
     try:
@@ -370,6 +370,21 @@ def main():
     if src.exists():
         shutil.copy2(src, backup_dir / f"backup_{ts}.xlsm")
         print("  Backup saved")
+
+    # Dump .htm file content for diagnosis
+    for _f in MONTHLY.iterdir():
+        if _f.suffix.lower() in ('.htm', '.html') and _f.stat().st_size < 500000:
+            try:
+                _raw = _f.read_bytes()
+                for _enc in ('utf-8', 'windows-1255', 'cp1255'):
+                    try:
+                        _txt = _raw.decode(_enc)
+                        print(f"\n  HTM FILE: {_f.name} ({len(_raw)} bytes, enc={_enc})")
+                        print(f"  FIRST 800 CHARS: {repr(_txt[:800])}")
+                        break
+                    except: continue
+            except Exception as _e:
+                print(f"  HTM read error {_f.name}: {_e}")
 
     tracker = load_tracker()
     # Self-heal: remove any .htm/.html entries from tracker so they always re-check
