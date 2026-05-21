@@ -1,4 +1,4 @@
-# Klein Finance - Monthly Sheet Updater v8.4
+# Klein Finance - Monthly Sheet Updater v8.5
 import sys, shutil, datetime, json, base64, re, warnings
 warnings.filterwarnings('ignore')
 from pathlib import Path
@@ -280,7 +280,7 @@ def write_sheet(xw_wb, name, data):
             xw_wb.app.screen_updating = True
 
 def main():
-    print("\n  Klein Finance - Monthly Update v8.4")
+    print("\n  Klein Finance - Monthly Update v8.5")
     print("  =====================================")
 
     try:
