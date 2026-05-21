@@ -1,4 +1,4 @@
-# Klein Finance - Monthly Sheet Updater v8.8
+# Klein Finance - Monthly Sheet Updater v8.9
 import sys, shutil, datetime, json, base64, re, warnings
 warnings.filterwarnings('ignore')
 from pathlib import Path
@@ -111,13 +111,15 @@ def read_rsu_from_image(img_path):
             "content": [
                 {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": img_b64}},
                 {"type": "text", "text": (
-                    "This is a screenshot from the Leumi brokerage app showing an RSU summary for Align Technology.\n"
-                    "The image has a dark background and shows two Hebrew labels with dollar amounts:\n"
-                    "- The label zamin lemimoosh with a green dot: this is the AVAILABLE/VESTED amount\n"
-                    "- The label trem hivshil with a blue dot: this is the UNVESTED amount\n"
-                    "Find the dollar amounts next to those two labels only.\n"
-                    "Ignore the large total at the top and ignore any tranche table rows.\n"
-                    'Return ONLY valid JSON, no markdown, no explanation: {"available": 0.00, "unvested": 0.00}'
+                    "You are looking at a dark-background screenshot from the Leumi brokerage app.\n"
+                    "It shows RSU holdings for Align Technology (ALGN).\n"
+                    "There are exactly two Hebrew labels with dollar amounts below the donut chart:\n"
+                    "1. zamin lemimoosh (זמין למימוש) — green dot — the AVAILABLE/VESTED dollar amount\n"
+                    "2. trem hivshil (טרם הבשיל) — blue dot — the UNVESTED dollar amount\n"
+                    "Read the two dollar values that appear next to those labels in the image.\n"
+                    "Return a JSON object with keys available and unvested containing those two numbers.\n"
+                    "Example format (replace with actual values from the image): "
+                    '{"available": 163380.00, "unvested": 351430.38}'
                 )}
             ]
         }]
@@ -299,7 +301,7 @@ def write_sheet(xw_wb, name, data):
             xw_wb.app.screen_updating = True
 
 def main():
-    print("\n  Klein Finance - Monthly Update v8.8")
+    print("\n  Klein Finance - Monthly Update v8.9")
     print("  =====================================")
 
     try:
