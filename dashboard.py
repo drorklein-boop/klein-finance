@@ -193,6 +193,16 @@ def build_holdings_html(holdings):
                  f'            </tr>\n')
     return rows
 
+_MONTH_MAP = {
+    'January':'ינו','February':'פבר','March':'מרץ','April':'אפר',
+    'May':'מאי','June':'יוני','July':'יולי','August':'אוג',
+    'September':'ספט','October':'אוק','November':'נוב','December':'דצמ'
+}
+def _month_he(period):
+    for eng, heb in _MONTH_MAP.items():
+        if eng in period: return heb
+    return period[:3]
+
 def fill_template(template, d):
     # Build dynamic HTML blocks
     top5_html     = build_top5_html(d['top5'])
@@ -209,6 +219,7 @@ def fill_template(template, d):
 
     substitutions = {
         '__PERIOD__':             str(d['period']),
+        '__CURRENT_MONTH__':       _month_he(str(d['period'])),
         '__REPORT_DATE__':        str(d['report_date']),
         '__LIQUID__':             ils(d['liquid']),
         '__PENSION_ALL__':        ils(d['pension_all']),
