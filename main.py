@@ -1,4 +1,4 @@
-# Klein Finance - Monthly Sheet Updater v8.14
+# Klein Finance - Monthly Sheet Updater v8.15
 import sys, shutil, datetime, json, base64, re, warnings
 warnings.filterwarnings('ignore')
 from pathlib import Path
@@ -282,19 +282,18 @@ def read_file(ftype, fpath):
                 return {'עוש': [t.columns.tolist()] + t.values.tolist()}
         if ftype == 'balance':
             for tbl in tables:
-                # Find the row that contains 'סוג פעילות' and use it as header
-                for i, row in tbl.iterrows():
-                    vals = [str(v) for v in row.values]
-                    if any('סוג פעילות' in v for v in vals):
-                        tbl.columns = tbl.iloc[i].values
-                        tbl = tbl.iloc[i+1:].reset_index(drop=True)
-                        tbl = tbl.dropna(how='all')
-                        return {'ריכוז יתרות לאומי': [list(tbl.columns)] + tbl.values.tolist()}
-                # Fallback: check flat content
-                flat = ' '.join(str(v) for v in tbl.values.flatten())
-                if 'עובר ושב' in flat or 'ניירות ערך' in flat:
-                    tbl = tbl.dropna(how='all')
-                    return {'ריכוז יתרות לאומי': [list(tbl.columns)] + tbl.values.tolist()}
+                # Flatten all rows to find 'סוג פעילות' — same logic as read_from_header for XLS
+                all_rows = [list(tbl.columns)] + tbl.values.tolist()
+                start = next((i for i, r in enumerate(all_rows)
+                              if any('סוג פעילות' in str(v) for v in r)), None)
+                if start is not None:
+                    data = [r for r in all_rows[start:] if any(v is not None and str(v).strip() not in ('', 'nan') for v in r)]
+                    return {'ריכוז יתרות לאומי': data}
+            # Fallback: largest table
+            if tables:
+                tbl = max(tables, key=len)
+                all_rows = [list(tbl.columns)] + tbl.values.tolist()
+                return {'ריכוז יתרות לאומי': all_rows}
     return {}
 
 
@@ -336,7 +335,7 @@ def write_sheet(xw_wb, name, data):
             xw_wb.app.screen_updating = True
 
 def main():
-    print("\n  Klein Finance - Monthly Update v8.14")
+    print("\n  Klein Finance - Monthly Update v8.15")
     print("  =====================================")
 
     try:
