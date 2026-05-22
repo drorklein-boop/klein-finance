@@ -1,4 +1,4 @@
-# Klein Finance - Monthly Sheet Updater v8.18
+# Klein Finance - Monthly Sheet Updater v8.19
 import sys, shutil, datetime, json, base64, re, warnings
 warnings.filterwarnings('ignore')
 from pathlib import Path
@@ -339,8 +339,16 @@ def write_sheet(xw_wb, name, data):
             raise ValueError(f'Validation failed: {name} A1 empty after write')
 
 def main():
-    print("\n  Klein Finance - Monthly Update v8.18")
+    print("\n  Klein Finance - Monthly Update v8.19")
     print("  =====================================")
+
+    if "--reset" in sys.argv:
+        if TRACKER.exists():
+            TRACKER.unlink()
+            print("  Tracker reset. Run again without --reset to process files.")
+        else:
+            print("  Tracker was already empty.")
+        input("\n  Press Enter to close..."); return
 
     try:
         import xlwings as xw
