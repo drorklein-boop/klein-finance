@@ -1,4 +1,4 @@
-# Klein Finance - Monthly Sheet Updater v8.15
+# Klein Finance - Monthly Sheet Updater v8.18
 import sys, shutil, datetime, json, base64, re, warnings
 warnings.filterwarnings('ignore')
 from pathlib import Path
@@ -325,6 +325,8 @@ def write_sheet(xw_wb, name, data):
             ws.range('A2').value = data
             xw_wb.app.calculation = 'automatic'
             xw_wb.app.screen_updating = True
+        if ws.range('A2').value is None:
+            raise ValueError(f'Validation failed: {name} A2 empty after write')
     else:
         ws.clear_contents()
         if data:
@@ -333,9 +335,11 @@ def write_sheet(xw_wb, name, data):
             ws.range('A1').value = data
             xw_wb.app.calculation = 'automatic'
             xw_wb.app.screen_updating = True
+        if ws.range('A1').value is None:
+            raise ValueError(f'Validation failed: {name} A1 empty after write')
 
 def main():
-    print("\n  Klein Finance - Monthly Update v8.15")
+    print("\n  Klein Finance - Monthly Update v8.18")
     print("  =====================================")
 
     try:
@@ -388,6 +392,15 @@ def main():
 
     print(f"\n  New/changed files: {len(new_files)}")
 
+    print("\n  MONTHLY folder manifest:")
+    for f in sorted(all_files, key=lambda x: x.name):
+        ftype_m = detect(f)
+        status = ftype_m if ftype_m else "UNDETECTED"
+        print(f"    {status:<18} {f.name} ({f.stat().st_size:,} bytes)")
+    undetected = [f for f in all_files if not detect(f)]
+    if undetected:
+        print(f"  WARNING: {len(undetected)} file(s) not recognised")
+
     typed = defaultdict(list)
     for f in new_files:
         t = detect(f)
@@ -436,6 +449,14 @@ def main():
             results.append(f"  ERROR {ftype} ({fpath.name}): {e}")
 
     wb.save()
+
+    last_good_dir = BASE / 'last_good'
+    last_good_dir.mkdir(exist_ok=True)
+    for fname in successfully_processed:
+        src_file = MONTHLY / fname
+        if src_file.exists():
+            import shutil as _sh
+            _sh.copy2(src_file, last_good_dir / fname)
 
     updated_tracker = dict(tracker)
     for f in all_files:
