@@ -1,4 +1,4 @@
-# Klein Finance - Monthly Sheet Updater v8.19
+# Klein Finance - Monthly Sheet Updater v8.20
 import sys, shutil, datetime, json, base64, re, warnings
 warnings.filterwarnings('ignore')
 from pathlib import Path
@@ -297,6 +297,40 @@ def read_file(ftype, fpath):
     return {}
 
 
+def _inject_dashboard_macro(wb):
+    """Inject or repair the RunDashboard VBA macro in the workbook."""
+    DASHBOARD_VBA = (
+        "Sub RunDashboard()\r\n"
+        "    Dim wsh As Object\r\n"
+        "    If Dir(\"C:\\KleinFinance\\launcher_dashboard.py\") = \"\" Then\r\n"
+        "        MsgBox \"launcher_dashboard.py not found in C:\\KleinFinance\\\", vbCritical\r\n"
+        "        Exit Sub\r\n"
+        "    End If\r\n"
+        "    Set wsh = CreateObject(\"WScript.Shell\")\r\n"
+        "    wsh.Run \"cmd /k python C:\\KleinFinance\\launcher_dashboard.py\", 1, False\r\n"
+        "    Set wsh = Nothing\r\n"
+        "End Sub"
+    )
+    try:
+        vbc = wb.api.VBProject.VBComponents
+        # Remove old module if broken
+        for i in range(vbc.Count, 0, -1):
+            comp = vbc.Item(i)
+            if comp.Name == "DashboardLauncher":
+                vbc.Remove(comp)
+                break
+        # Add fresh module
+        new_mod = vbc.Add(1)
+        new_mod.Name = "DashboardLauncher"
+        new_mod.CodeModule.AddFromString(DASHBOARD_VBA)
+        print("  Dashboard macro injected OK")
+    except Exception as e:
+        if "programmatic access" in str(e).lower() or "trust" in str(e).lower():
+            pass  # Trust access not enabled — silently skip
+        else:
+            print(f"  Dashboard macro skipped: {e}")
+
+
 def write_rsu_tranche_table(wb):
     ws = wb.sheets['ALIGN RSU']
     # Only write if table header is not already there
@@ -339,7 +373,7 @@ def write_sheet(xw_wb, name, data):
             raise ValueError(f'Validation failed: {name} A1 empty after write')
 
 def main():
-    print("\n  Klein Finance - Monthly Update v8.19")
+    print("\n  Klein Finance - Monthly Update v8.20")
     print("  =====================================")
 
     if "--reset" in sys.argv:
@@ -375,6 +409,7 @@ def main():
 
     print(f"  Workbook found: {wb.name}")
     write_rsu_tranche_table(wb)
+    _inject_dashboard_macro(wb)
 
     backup_dir = BASE / "backups"
     backup_dir.mkdir(exist_ok=True)
