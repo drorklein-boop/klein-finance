@@ -1,4 +1,4 @@
-# Klein Finance - Monthly Sheet Updater v8.13
+# Klein Finance - Monthly Sheet Updater v8.14
 import sys, shutil, datetime, json, base64, re, warnings
 warnings.filterwarnings('ignore')
 from pathlib import Path
@@ -281,16 +281,20 @@ def read_file(ftype, fpath):
                 t = big[0].dropna(how='all')
                 return {'עוש': [t.columns.tolist()] + t.values.tolist()}
         if ftype == 'balance':
-            balance_key = ['סוג פעילות', 'עובר ושב', 'ניירות ערך']
             for tbl in tables:
+                # Find the row that contains 'סוג פעילות' and use it as header
+                for i, row in tbl.iterrows():
+                    vals = [str(v) for v in row.values]
+                    if any('סוג פעילות' in v for v in vals):
+                        tbl.columns = tbl.iloc[i].values
+                        tbl = tbl.iloc[i+1:].reset_index(drop=True)
+                        tbl = tbl.dropna(how='all')
+                        return {'ריכוז יתרות לאומי': [list(tbl.columns)] + tbl.values.tolist()}
+                # Fallback: check flat content
                 flat = ' '.join(str(v) for v in tbl.values.flatten())
-                col_str = str(tbl.columns.tolist())
-                if any(k in col_str or k in flat for k in balance_key):
-                    return {'ריכוז יתרות לאומי': [tbl.columns.tolist()] + tbl.values.tolist()}
-            # Fallback: first table with at least 3 rows
-            if tables:
-                t = tables[0].dropna(how='all')
-                return {'ריכוז יתרות לאומי': [t.columns.tolist()] + t.values.tolist()}
+                if 'עובר ושב' in flat or 'ניירות ערך' in flat:
+                    tbl = tbl.dropna(how='all')
+                    return {'ריכוז יתרות לאומי': [list(tbl.columns)] + tbl.values.tolist()}
     return {}
 
 
@@ -332,7 +336,7 @@ def write_sheet(xw_wb, name, data):
             xw_wb.app.screen_updating = True
 
 def main():
-    print("\n  Klein Finance - Monthly Update v8.13")
+    print("\n  Klein Finance - Monthly Update v8.14")
     print("  =====================================")
 
     try:
