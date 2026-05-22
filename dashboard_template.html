@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>מאזן קליין — __PERIOD__</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0b0e14; --bg2:#111520; --bg3:#161b28; --bg4:#1c2235;
+  --border:#1e2438; --text:#dce4f0; --muted:#6b7897;
+  --gold:#c8a45e; --gold2:#e8c47e;
+  --green:#3bbd6e; --yellow:#e8b84b; --red:#e05555; --blue:#7baad4;
+  --mono:'JetBrains Mono',monospace;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--bg);color:var(--text);font-family:'Heebo',sans-serif;direction:rtl;min-height:100vh;width:100%;overflow-x:hidden;font-size:15px}
+
+/* HEADER */
+.header{background:linear-gradient(135deg,#0d1019,#141928);border-bottom:1px solid var(--border);padding:18px 16px 14px}
+.header-top{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.header-brand{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+.header-brand strong{display:block;font-size:20px;color:var(--gold);font-weight:800;margin-top:2px}
+.header-meta{font-size:13px;color:var(--muted);line-height:2;text-align:left}
+.header-meta strong{color:var(--text)}
+.nw-split{display:flex;flex-direction:column;margin-top:14px;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+@media(min-width:520px){.nw-split{flex-direction:row}.nw-block{border-left:1px solid var(--border);border-bottom:none!important}.nw-block:last-child{border-left:none}}
+.nw-block{flex:1;padding:13px 16px;border-bottom:1px solid var(--border)}
+.nw-block:last-child{border-bottom:none}
+.nw-label{font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.nw-val{font-family:var(--mono);font-size:20px;font-weight:600}
+.nw-sub{font-size:11px;color:var(--muted);margin-top:3px}
+
+/* STRIP */
+.strip-wrap{background:var(--bg2);border-bottom:1px solid var(--border)}
+.strip{display:grid;grid-template-columns:repeat(3,1fr)}
+@media(min-width:700px){.strip{grid-template-columns:repeat(6,1fr)}}
+.strip-cell{padding:12px 13px;border-left:1px solid var(--border);border-bottom:1px solid var(--border)}
+.strip-cell:nth-child(3n+1){border-left:none}
+@media(min-width:700px){
+  .strip-cell:nth-child(3n+1){border-left:1px solid var(--border)}
+  .strip-cell:first-child{border-left:none}
+  .strip-cell{border-bottom:none}
+}
+.strip-cell.clickable{cursor:pointer;transition:background 0.15s}
+.strip-cell.clickable:hover{background:var(--bg3)}
+.strip-cell.active{background:var(--bg3);border-bottom:2px solid var(--gold)!important}
+.sc-label{font-size:11px;color:var(--muted);margin-bottom:3px}
+.sc-value{font-family:var(--mono);font-size:15px;font-weight:600}
+.sc-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.sc-hint{font-size:10px;color:var(--muted);margin-top:3px;opacity:0.7}
+
+/* STRIP PANEL */
+.strip-panel{display:none;background:var(--bg3);border-bottom:1px solid var(--border);padding:18px 16px;animation:fadeIn 0.2s ease}
+.strip-panel.open{display:block}
+@media(min-width:700px){.strip-panel{padding:20px 28px}}
+
+/* MAIN */
+.main{padding:14px;width:100%}
+@media(min-width:700px){.main{padding:20px 28px}}
+.section-label{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;margin-top:22px}
+
+/* PORTFOLIO EXPANDABLE CARDS */
+.portfolio-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:700px){.portfolio-grid{grid-template-columns:repeat(4,1fr)}}
+.pcard{background:var(--bg2);border:1px solid var(--border);border-radius:9px;overflow:hidden;transition:border-color 0.2s}
+.pcard.expandable{cursor:pointer}
+.pcard.expandable:hover{border-color:#2a3150}
+.pcard.open{border-color:#2a3458;box-shadow:0 4px 18px rgba(0,0,0,0.3);grid-column:1/-1}
+.pcard-head{padding:13px}
+.pcard-label{font-size:11px;color:var(--muted);margin-bottom:5px;display:flex;justify-content:space-between;align-items:center}
+.pcard-chevron{font-size:10px;color:var(--muted);transition:transform 0.25s}
+.pcard.open .pcard-chevron{transform:rotate(180deg)}
+.pcard-value{font-family:var(--mono);font-size:18px;font-weight:600}
+.pcard-sub{font-size:11px;margin-top:4px}
+.pcard-body{display:none;padding:0 13px 16px;border-top:1px solid var(--border);animation:fadeIn 0.2s ease}
+.pcard.open .pcard-body{display:block}
+
+.ratio-bar{margin-top:8px}
+.ratio-track{background:var(--bg4);border-radius:3px;height:6px;overflow:hidden;display:flex}
+.ratio-stocks{background:var(--green)}
+.ratio-mm{background:var(--yellow)}
+.ratio-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:3px;flex-wrap:wrap;gap:2px}
+
+/* EXPENSES */
+.exp-grid{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:600px){.exp-grid{grid-template-columns:1fr 1fr}}
+.exp-card{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:14px}
+.exp-card-title{font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px}
+.exp-row{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);gap:7px}
+.exp-row:last-child{border-bottom:none}
+.exp-row-name{color:var(--text);flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.exp-row-badge{font-size:10px;color:var(--muted);background:var(--bg4);padding:2px 6px;border-radius:8px;flex-shrink:0}
+.exp-row-amount{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--gold2);flex-shrink:0}
+.cat-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)}
+.cat-row:last-child{border-bottom:none}
+.cat-bar-wrap{flex:1;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden}
+.cat-bar-fill{height:100%;background:var(--gold);border-radius:3px}
+.cat-name{font-size:13px;min-width:110px}
+.cat-amount{font-family:var(--mono);font-size:13px;color:var(--gold2);min-width:58px;text-align:left}
+.cat-pct{font-size:11px;color:var(--muted);min-width:36px;text-align:left}
+.cat-total-change{font-size:15px;font-weight:600;padding:9px 0 7px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px}
+.cat-changes-row{margin-top:9px;padding-top:8px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);line-height:1.7}
+
+/* SPENDING TREND */
+.trend-toggle{display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 0 4px;font-size:12px;color:var(--muted);user-select:none}
+.trend-toggle:hover{color:var(--text)}
+.trend-body{display:none;animation:fadeIn 0.18s ease}
+.trend-body.open{display:block}
+.trend-month-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.trend-month-label{font-size:11px;color:var(--muted);text-align:center;margin-bottom:4px}
+.trend-cat-row{display:grid;grid-template-columns:100px 1fr 1fr 1fr;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid rgba(30,36,56,0.5);font-size:11px}
+.trend-cat-row:last-child{border-bottom:none}
+.trend-cat-name{color:var(--muted)}
+.trend-bar-cell{display:flex;align-items:center;gap:5px}
+.trend-bar{height:14px;border-radius:2px;background:var(--gold);min-width:2px;transition:width 0.4s}
+.trend-bar-val{font-family:var(--mono);font-size:10px;color:var(--gold2);white-space:nowrap}
+
+/* DECISION ROWS */
+.decision-row{background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;overflow:hidden}
+.decision-row.open{border-color:#2a3458;box-shadow:0 4px 18px rgba(0,0,0,0.3)}
+.d-header{display:flex;align-items:center;padding:14px;cursor:pointer;user-select:none;gap:10px;flex-wrap:wrap}
+.tdot{width:13px;height:13px;border-radius:50%;flex-shrink:0}
+.tdot.red{background:var(--red);box-shadow:0 0 8px var(--red)}
+.tdot.yellow{background:var(--yellow);box-shadow:0 0 8px var(--yellow)}
+.tdot.green{background:var(--green);box-shadow:0 0 8px var(--green)}
+.d-title{font-size:15px;font-weight:600;flex:1;min-width:100px}
+.d-status{font-family:var(--mono);font-size:11px;color:var(--muted);width:100%;padding-top:2px;line-height:1.6}
+.badge{padding:3px 11px;border-radius:20px;font-size:13px;font-weight:600;white-space:nowrap}
+.badge.wait{background:rgba(224,85,85,.12);color:var(--red);border:1px solid rgba(224,85,85,.25)}
+.badge.watch{background:rgba(232,184,75,.12);color:var(--yellow);border:1px solid rgba(232,184,75,.25)}
+.badge.act{background:rgba(59,189,110,.12);color:var(--green);border:1px solid rgba(59,189,110,.25)}
+.d-chevron{color:var(--muted);font-size:12px;transition:transform 0.25s}
+.decision-row.open .d-chevron{transform:rotate(180deg)}
+.d-body{display:none;padding:0 14px 16px;border-top:1px solid var(--border);animation:fadeIn 0.18s ease}
+.decision-row.open .d-body{display:block}
+
+.row-connector{display:flex;align-items:center;font-size:11px;color:var(--muted);padding:4px 0 4px 2px;gap:6px;margin-bottom:2px}
+.row-connector::before{content:'';width:2px;height:22px;background:var(--border);margin-right:8px;margin-left:12px}
+
+/* TABS */
+.tabs{display:flex;gap:2px;margin:14px 0 16px;border-bottom:1px solid var(--border)}
+.tab-btn{background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:'Heebo',sans-serif;font-size:13px;padding:6px 14px;cursor:pointer;margin-bottom:-1px;transition:color 0.15s}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--gold2);border-bottom-color:var(--gold)}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
+/* DETAIL CARDS */
+.detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:12px 0}
+@media(min-width:480px){.detail-grid{grid-template-columns:repeat(3,1fr)}}
+.dcard{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px}
+.dcard-label{font-size:11px;color:var(--muted);margin-bottom:5px}
+.dcard-value{font-family:var(--mono);font-size:18px;font-weight:600}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.dtable{width:100%;border-collapse:collapse;font-size:13px;min-width:580px}
+.dtable th{text-align:right;color:var(--muted);font-weight:400;font-size:11px;padding:7px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
+.dtable td{padding:10px 10px;border-bottom:1px solid rgba(30,36,56,0.5);font-family:var(--mono);font-size:13px;white-space:nowrap}
+.dtable tr:last-child td{border-bottom:none}
+.dtable tfoot td{border-top:1px solid var(--border);font-weight:700;font-size:15px}
+.alert-row td{background:rgba(224,85,85,0.05)}
+
+/* HOLDINGS TABLE */
+.hold-table{width:100%;border-collapse:collapse;font-size:13px}
+.hold-table th{text-align:right;color:var(--muted);font-weight:400;font-size:11px;padding:6px 10px;border-bottom:1px solid var(--border)}
+.hold-table td{padding:9px 10px;border-bottom:1px solid rgba(30,36,56,0.4);font-family:var(--mono);font-size:13px}
+.hold-table tr:last-child td{border-bottom:none}
+.hold-bar-wrap{width:80px;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden;display:inline-block;vertical-align:middle;margin-left:6px}
+.hold-bar{height:100%;border-radius:3px}
+
+/* SLIDER */
+.slider-row{display:flex;align-items:center;gap:12px;background:var(--bg3);border-radius:8px;padding:12px 14px;margin-bottom:14px}
+.slider-label{font-size:15px;color:var(--muted);white-space:nowrap}
+input[type=range]{flex:1;accent-color:var(--gold);cursor:pointer}
+.slider-val{font-family:var(--mono);font-size:26px;font-weight:600;color:var(--gold2);min-width:70px;text-align:left}
+
+/* PROGRESS */
+.prog-wrap{margin:12px 0}
+.prog-label{font-size:13px;color:var(--muted);margin-bottom:6px}
+.prog-track{background:var(--bg4);border-radius:4px;height:7px;overflow:hidden}
+.prog-fill{height:100%;border-radius:4px;transition:width 1s ease}
+.prog-info{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:5px}
+
+/* MACRO */
+.macro-box{background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:16px;margin-top:14px}
+.macro-title{font-size:11px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px}
+.macro-signal-row{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.macro-signal-label{font-size:18px;font-weight:700}
+.macro-body{font-size:15px;line-height:1.85;color:var(--text)}
+.macro-body p+p{margin-top:8px}
+.macro-body strong{color:var(--gold2)}
+.macro-indicators{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:14px 0}
+@media(min-width:500px){.macro-indicators{grid-template-columns:repeat(4,1fr)}}
+.mi-card{background:var(--bg4);border-radius:7px;padding:10px 12px;text-align:center}
+.mi-label{font-size:11px;color:var(--muted);margin-bottom:4px}
+.mi-value{font-family:var(--mono);font-size:15px;font-weight:600}
+.mi-sub{font-size:10px;color:var(--muted);margin-top:3px}
+.macro-generated{font-size:11px;color:var(--muted);margin-top:12px;border-top:1px solid var(--border);padding-top:9px}
+
+/* CHARTS */
+.chart-grid{display:grid;grid-template-columns:1fr;gap:16px;margin-top:16px}
+@media(min-width:640px){.chart-grid{grid-template-columns:1fr 1fr}}
+.chart-card{background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:14px;direction:ltr}
+.chart-title{font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;direction:rtl}
+.chart-svg{width:100%;display:block}
+/* TREND TABLE */
+.trend-tbl{width:100%;border-collapse:collapse;direction:rtl;margin-top:8px}
+.trend-tbl th{font-size:11px;font-weight:500;padding:6px 8px;border-bottom:1px solid var(--border);text-align:center}
+.trend-tbl th:first-child{text-align:right;color:var(--muted)}
+.trend-tbl td{padding:7px 8px;border-bottom:1px solid rgba(30,36,56,0.4);vertical-align:middle}
+.trend-tbl td:first-child{font-size:11px;color:var(--muted);white-space:nowrap;text-align:right}
+.trend-tbl tr:last-child td{border-bottom:none}
+.tbar-wrap{display:flex;align-items:center;gap:5px}
+.tbar{height:11px;border-radius:2px;min-width:2px;flex-shrink:0}
+.tbar-val{font-family:var(--mono);font-size:11px;white-space:nowrap}
+
+/* INCOME BREAKDOWN */
+.income-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}
+@media(min-width:480px){.income-grid{grid-template-columns:repeat(4,1fr)}}
+.income-card{background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:11px}
+.income-label{font-size:11px;color:var(--muted);margin-bottom:4px}
+.income-value{font-family:var(--mono);font-size:16px;font-weight:600}
+.income-sub{font-size:10px;color:var(--muted);margin-top:3px}
+.income-trend{display:grid;grid-template-columns:repeat(11,1fr);gap:2px;align-items:flex-end;height:60px;margin-top:10px}
+.income-bar-col{display:flex;flex-direction:column;align-items:center;gap:2px}
+.income-bar-inner{width:100%;border-radius:2px 2px 0 0;min-height:2px;transition:height 0.6s}
+.income-bar-label{font-size:8px;color:var(--muted);text-align:center;white-space:nowrap;transform:rotate(-45deg);transform-origin:center;margin-top:2px}
+
+/* EXPENSE BREAKDOWN PANEL */
+.exp-breakdown-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px}
+.exp-breakdown-row:last-child{border-bottom:none}
+.exp-breakdown-name{flex:1;color:var(--text)}
+.exp-breakdown-bar-wrap{width:120px;height:7px;background:var(--bg4);border-radius:3px;overflow:hidden;flex-shrink:0}
+.exp-breakdown-bar{height:100%;border-radius:3px;background:var(--yellow)}
+.exp-breakdown-val{font-family:var(--mono);font-size:13px;color:var(--gold2);min-width:70px;text-align:left;flex-shrink:0}
+.exp-breakdown-pct{font-size:11px;color:var(--muted);min-width:36px;text-align:left;flex-shrink:0}
+
+/* STRATEGY */
+.strategy-box{background:var(--bg4);border-radius:8px;padding:14px;margin-top:12px;font-size:15px;line-height:1.9}
+.strategy-box strong{color:var(--gold2)}
+.note{font-size:11px;color:var(--muted);margin-top:10px;line-height:1.7}
+.alert-tag{background:rgba(224,85,85,0.15);color:var(--red);border:1px solid rgba(224,85,85,0.3);padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;margin-right:6px}
+
+/* MISC */
+.c-gold{color:var(--gold2)} .c-green{color:var(--green)} .c-yellow{color:var(--yellow)} .c-red{color:var(--red)} .c-blue{color:var(--blue)} .c-muted{color:var(--muted)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div class="header-brand">מאזן קליין<strong>דשבורד חודשי</strong></div>
+    <div class="header-meta">
+      <div><strong>__PERIOD__</strong> | עדכון: __REPORT_DATE__</div>
+      <div>שער דולר: <strong>__RATE__</strong> (__RATE_DATE__)</div>
+      <div style="color:var(--yellow)">★ חודש בונוס שנתי</div>
+    </div>
+  </div>
+  <div class="nw-split">
+    <div class="nw-block" style="background:#0e1322">
+      <div class="nw-label">נכסים נזילים נטו</div>
+      <div class="nw-val c-gold">__LIQUID__</div>
+      <div class="nw-sub">תיק + עו״ש + RSU נטו − משכנתא</div>
+    </div>
+    <div class="nw-block" style="background:#0b1420">
+      <div class="nw-label">פנסיה + השתלמות</div>
+      <div class="nw-val c-blue">__PENSION_ALL__</div>
+      <div class="nw-sub">לא נזיל כרגע</div>
+    </div>
+    <div class="nw-block" style="background:#0d0e16">
+      <div class="nw-label">סה״כ נכסים לפני מס</div>
+      <div class="nw-val c-gold">__NET_WORTH__</div>
+      <div class="nw-sub">משכנתא: <span class="c-red">__MORTGAGE_NEG__</span> | ברוטו: __GROSS__</div>
+    </div>
+  </div>
+</div>
+
+<!-- STRIP -->
+<div class="strip-wrap">
+<div class="strip">
+  <div class="strip-cell clickable" id="sc-income" onclick="toggleStripPanel('income')">
+    <div class="sc-label">הכנסות</div>
+    <div class="sc-value c-gold">__INCOME__</div>
+    <div class="sc-sub">כולל בונוס</div>
+    <div class="sc-hint">← לפירוט</div>
+  </div>
+  <div class="strip-cell clickable" id="sc-expenses" onclick="toggleStripPanel('expenses')">
+    <div class="sc-label">הוצאות</div>
+    <div class="sc-value">__EXPENSES__</div>
+    <div class="sc-sub">כרטיסי אשראי</div>
+    <div class="sc-hint">← לפירוט</div>
+  </div>
+  <div class="strip-cell">
+    <div class="sc-label">יתרה חודשית</div>
+    <div class="sc-value c-green">__SURPLUS__</div>
+    <div class="sc-sub">חיסכון __SAVINGS_RATE__</div>
+  </div>
+  <div class="strip-cell">
+    <div class="sc-label">פנוי להשקעה</div>
+    <div class="sc-value c-green">__BANK_FREE_STRIP__</div>
+    <div class="sc-sub">מעל מינימום</div>
+  </div>
+  <div class="strip-cell">
+    <div class="sc-label">מצב עו״ש</div>
+    <div class="sc-value c-green">₪65,000</div>
+    <div class="sc-sub">פנוי: __BANK_FREE__</div>
+  </div>
+  <div class="strip-cell">
+    <div class="sc-label">משכנתא</div>
+    <div class="sc-value c-red">__MORTGAGE__</div>
+    <div class="sc-sub">התחייבות</div>
+  </div>
+</div>
+</div>
+
+<!-- STRIP PANEL: INCOME -->
+<div class="strip-panel" id="panel-income">
+  <div class="section-label" style="margin-top:0">פירוט הכנסות — אפריל 2026</div>
+  <div class="income-grid">
+    <div class="income-card">
+      <div class="income-label">משכורת Align</div>
+      <div class="income-value c-gold">__INCOME_ALIGN__</div>
+      <div class="income-sub" style="color:var(--yellow)">★ כולל בונוס שנתי</div>
+      <div class="income-sub">רגיל: ₪41-50K</div>
+    </div>
+    <div class="income-card">
+      <div class="income-label">משכורת Insightech</div>
+      <div class="income-value c-blue">__INCOME_OTHER__</div>
+      <div class="income-sub c-muted">ממוצע אחרון (פבר׳ 26)</div>
+      <div class="income-sub c-yellow">לא דווח עדיין לאפריל</div>
+    </div>
+    <div class="income-card">
+      <div class="income-label">קצבת ילדים</div>
+      <div class="income-value">₪276</div>
+      <div class="income-sub c-muted">קבוע</div>
+    </div>
+    <div class="income-card">
+      <div class="income-label">אחר</div>
+      <div class="income-value">₪2,833</div>
+      <div class="income-sub c-muted">עמלות / חזרי כספים</div>
+    </div>
+  </div>
+  <div class="chart-grid" style="margin-top:8px">
+    <div class="chart-card">
+      <div class="chart-title">מגמת הכנסות חודשית — 11 חודשים אחרונים</div>
+      <div id="chart-income-trend"></div>
+    </div>
+  </div>
+</div>
+
+<!-- STRIP PANEL: EXPENSES -->
+<div class="strip-panel" id="panel-expenses">
+  <div class="section-label" style="margin-top:0">פירוט הוצאות — אפריל 2026</div>
+  <div class="exp-breakdown-row">
+    <div class="exp-breakdown-name">כרטיסי אשראי (מקס + אישראכרט)</div>
+    <div class="exp-breakdown-bar-wrap"><div class="exp-breakdown-bar" style="width:89%"></div></div>
+    <div class="exp-breakdown-val">__EXP_CREDIT__</div>
+    <div class="exp-breakdown-pct">88.8%</div>
+  </div>
+  <div class="exp-breakdown-row">
+    <div class="exp-breakdown-name">משיכת מזומן</div>
+    <div class="exp-breakdown-bar-wrap"><div class="exp-breakdown-bar" style="width:7.6%"></div></div>
+    <div class="exp-breakdown-val">₪3,500</div>
+    <div class="exp-breakdown-pct">7.6%</div>
+  </div>
+  <div class="exp-breakdown-row">
+    <div class="exp-breakdown-name">משכנתא</div>
+    <div class="exp-breakdown-bar-wrap"><div class="exp-breakdown-bar" style="width:3.3%"></div></div>
+    <div class="exp-breakdown-val">₪1,523</div>
+    <div class="exp-breakdown-pct">3.3%</div>
+  </div>
+  <div class="exp-breakdown-row">
+    <div class="exp-breakdown-name">עמלות ואחר</div>
+    <div class="exp-breakdown-bar-wrap"><div class="exp-breakdown-bar" style="width:0.3%"></div></div>
+    <div class="exp-breakdown-val">₪140</div>
+    <div class="exp-breakdown-pct">0.3%</div>
+  </div>
+  <div class="note" style="margin-top:12px">סה״כ הוצאות חודש זה: __EXPENSES__ &nbsp;|&nbsp; ממוצע שנתי: __AVG_MONTHLY__ לחודש</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <div class="section-label">פיזור נכסים</div>
+  <div class="portfolio-grid" id="portfolio-grid">
+
+    <!-- ריכוז יתרות — FIRST (rightmost in RTL) -->
+    <div class="pcard expandable" id="pc-leumi" onclick="togglePC('leumi')">
+      <div class="pcard-head">
+        <div class="pcard-label">ריכוז יתרות לאומי <span class="pcard-chevron">▼</span></div>
+        <div class="pcard-value">__BANK__</div>
+        <div class="pcard-sub c-muted">יתרת עו״ש</div>
+        <div class="pcard-sub c-muted">לחץ לגרפי תזרים</div>
+      </div>
+      <div class="pcard-body">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:4px">ניירות ערך: __SEC_VAL__ &nbsp;|&nbsp; אשראי: __CREDIT_NEG__</div>
+        <div class="chart-grid" id="charts-leumi">
+          <div class="chart-card">
+            <div class="chart-title">הכנסות vs הוצאות — 11 חודשים</div>
+            <div id="chart-inc-exp"></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">יתרה חודשית</div>
+            <div id="chart-surplus"></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">הכנסות לפי מקור — Align + Insightech</div>
+            <div id="chart-income-src"></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">השקעות חודשיות</div>
+            <div id="chart-investments"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRADING ACCOUNT — SECOND -->
+    <div class="pcard expandable" id="pc-trading" onclick="togglePC('trading')">
+      <div class="pcard-head">
+        <div class="pcard-label">חשבון מסחר — לאומי <span class="pcard-chevron">▼</span></div>
+        <div class="pcard-value c-gold">__PORTFOLIO__</div>
+        <div class="ratio-bar">
+          <div class="ratio-track">
+            <div class="ratio-stocks" style="width:__STOCKS_PCT__%"></div>
+            <div class="ratio-mm" style="width:__MM_PCT__%"></div>
+          </div>
+          <div class="ratio-labels">
+            <span class="c-green">מניות 71%</span>
+            <span class="c-yellow">כספית 29%</span>
+          </div>
+        </div>
+        <div class="pcard-sub c-green">__INVEST_PCT__% מיעד ₪2M &nbsp;|&nbsp; לחץ לפירוט אחזקות</div>
+      </div>
+      <div class="pcard-body">
+        <div style="margin-bottom:12px">
+          <span class="alert-tag">⚠ 2 פוזיציות מפסידות</span>
+          <span style="font-size:12px;color:var(--muted)">לחץ לפרטים</span>
+        </div>
+        <table class="hold-table">
+          <thead><tr>
+            <th>נייר</th><th>שווי</th><th>% תיק</th><th>% רווח</th>
+          </tr></thead>
+          <tbody>
+            __HOLDINGS_ROWS__
+          </tbody>
+        </table>
+        <div class="macro-box" style="margin-top:14px">
+          <div class="macro-title">ניתוח תיק + המלצות מאקרו — אפריל 2026</div>
+          <div class="macro-body">
+            <p><strong>מבנה התיק:</strong> ACWI ב-40% הוא הגיוני וטוב. אבל יש לך חשיפה כפולה לשוק האמריקאי — ACWI מכיל ~65% מניות אמריקאיות, ועל זה מתווספת פוזיציית S&P 500 של 7.8%. ביחד, ~34% מהתיק הוא בעצם ארה״ב בלבד. זה לא רע בהכרח, אבל כדאי שתדע.</p>
+            <p><strong>זהב ב-5.3%:</strong> עובד מצוין — +87% רווח. בסביבת אי-וודאות גיאופוליטית ומטבעית זו פוזיציה שמחזיקה ערך. לא נגע בה.</p>
+            <p><strong>Bitcoin ETF + BMNR — ⚠ ייקח פעולה:</strong> שתי פוזיציות קריפטו-סמוכות ביחד מפסידות כ-₪22,256. הן מהוות 1.8% מהתיק אבל גוזלות תשומת לב. BMNR במיוחד (₪7,824 שווי, −39%) — זו פוזיציה קטנה עם הפסד גדול. שקול לנקות אותה עכשיו ולקחת הפסד מס שיקזז רווחים עתידיים.</p>
+            <p><strong>ת״א 125 ב-12.7%:</strong> ריכוז ישראלי גבוה יחסית. בהתחשב בסיכון גיאופוליטי מקומי, כדאי לחשוב אם לצמצם לטווח ארוך לטובת ACWI.</p>
+          </div>
+          <div class="macro-generated">⚙️ ניתוח זה מופק על ידי Claude דרך main.py בכל ריצה חודשית</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RSU — THIRD -->
+    <div class="pcard expandable" id="pc-rsu" onclick="togglePC('rsu')">
+      <div class="pcard-head">
+        <div class="pcard-label">RSU — Align Technology <span class="pcard-chevron">▼</span></div>
+        <div class="pcard-value">__RSU_USD__</div>
+        <div class="pcard-sub c-muted">__RSU_ILS__ נטו &nbsp;|&nbsp; ALGN __ALGN_PRICE__</div>
+        <div class="pcard-sub c-yellow">יעד: $300 &nbsp;|&nbsp; −38% מהיעד</div>
+      </div>
+      <div class="pcard-body">
+        <!-- TRANCHE SUMMARY AT TOP -->
+        <div style="font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin:12px 0 8px">פירוט פעימות — מצב נוכחי</div>
+        <table class="hold-table" style="margin-bottom:14px">
+          <thead><tr>
+            <th>פעימה</th><th>מניות זמינות</th><th>בסיס</th><th>רו״ה נוכחי</th><th>שווי כיום</th><th>סטטוס</th>
+          </tr></thead>
+          <tbody>
+            <tr>
+              <td>פבר 2021</td><td>76</td>
+              <td class="c-muted">$538.71</td>
+              <td class="c-red">($354.02)</td>
+              <td>$14,036</td>
+              <td class="c-green" style="font-size:11px">✓ חופשי</td>
+            </tr>
+            <tr>
+              <td>פבר 2022</td><td>99</td>
+              <td class="c-muted">$505.68</td>
+              <td class="c-red">($320.99)</td>
+              <td>$18,284</td>
+              <td class="c-green" style="font-size:11px">✓ חופשי</td>
+            </tr>
+            <tr>
+              <td>פבר 2023</td><td>245</td>
+              <td class="c-muted">$282.30</td>
+              <td class="c-red">($97.61)</td>
+              <td>$45,249</td>
+              <td class="c-green" style="font-size:11px">✓ חופשי</td>
+            </tr>
+            <tr>
+              <td>פבר 2024</td><td>362</td>
+              <td class="c-muted">$277.54</td>
+              <td class="c-red">($92.85)</td>
+              <td>$66,858</td>
+              <td class="c-green" style="font-size:11px">✓ חופשי</td>
+            </tr>
+            <tr>
+              <td>פבר 2025</td><td>218 (+654 טרם)</td>
+              <td class="c-muted">$217.32</td>
+              <td class="c-green">+$32.63</td>
+              <td>$40,262</td>
+              <td style="color:var(--red);font-size:11px">🔒 עד 20.2.2027</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3" class="c-muted" style="font-size:10px">סה״כ זמין: 1,000 מניות חופשיות</td>
+              <td colspan="2" class="c-gold">__RSU_VESTED_USD__ ≈ __RSU_VESTED_ILS__</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+        <div class="note" style="margin-bottom:12px">
+          פעימות 2021+2022 — בהפסד על הבסיס, אין מס בכל מחיר מכירה. ניקוי פוזיציות ישנות יצור הפסד הון לקיזוז.<br>
+          פעימת 2025 נעולה עד 20.2.2027. מכירה לפני כן = מס שולי 47% במקום 25%.
+        </div>
+        <div style="font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">מחשבון מכירה לפי מחיר יעד ↓</div>
+        <div class="slider-row" style="margin-bottom:10px">
+          <span class="slider-label">יעד:</span>
+          <input type="range" min="150" max="600" value="300" id="rsu-slider2" oninput="syncSlider(+this.value)">
+          <span class="slider-val" style="font-size:20px" id="rsu-slider-val2">$300</span>
+        </div>
+        <div class="table-wrap">
+        <table class="dtable">
+          <thead><tr>
+            <th>פעימה</th><th>מניות</th><th>בסיס</th><th>רו״ה/מניה</th>
+            <th>ברוטו</th><th>מס 25%</th><th>נטו $</th><th>נטו ₪</th><th>סטטוס</th>
+          </tr></thead>
+          <tbody id="rsu-tbody2"></tbody>
+          <tfoot id="rsu-tfoot2"></tfoot>
+        </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PENSION — FOURTH (leftmost in RTL) -->
+    <div class="pcard expandable" id="pc-pension" onclick="togglePC('pension')">
+      <div class="pcard-head">
+        <div class="pcard-label">פנסיה + השתלמות <span class="pcard-chevron">▼</span></div>
+        <div class="pcard-value c-blue">__PENSION_ALL__</div>
+        <div class="pcard-sub c-muted">פנסיה __PENSION_TOTAL_K__ &nbsp;|&nbsp; השתלמות __HISHTALMUT_TOTAL_K__</div>
+        <div class="pcard-sub c-green">__PENSION_CHG__ החודש</div>
+      </div>
+      <div class="pcard-body">
+
+        <!-- DROR PENSION -->
+        <div style="font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin:12px 0 8px">דרור — פנסיה</div>
+        <table class="hold-table">
+          <thead><tr><th>מוצר</th><th>שווי</th><th>תשואה מתחילת השנה</th><th>דמי ניהול</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>מגדל מקפת — פנסיה כללית</td>
+              <td class="c-blue">__PENSION_DROR_F1__</td>
+              <td class="c-red">−1.6%</td>
+              <td class="c-green">0%</td>
+            </tr>
+            <tr>
+              <td>מגדל מקפת — פנסיה מקיפה</td>
+              <td class="c-blue">__PENSION_DROR_F2__</td>
+              <td class="c-red">−1.6%</td>
+              <td class="c-green">0%</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td class="c-muted" style="font-size:10px">סה״כ פנסיה דרור</td>
+              <td class="c-gold">__PENSION_DROR__</td>
+              <td></td><td></td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <!-- LIAT PENSION -->
+        <div style="font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin:12px 0 8px">ליאת — פנסיה</div>
+        <table class="hold-table">
+          <thead><tr><th>מוצר</th><th>שווי</th><th>תשואה מתחילת השנה</th><th>דמי ניהול</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>פנסיה הפניקס</td>
+              <td class="c-blue">__PENSION_LIAT__</td>
+              <td class="c-green">+3.0%</td>
+              <td class="c-muted">0.1%</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- PROVIDENT FUNDS -->
+        <div style="font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin:12px 0 8px">קרנות השתלמות</div>
+        <table class="hold-table">
+          <thead><tr><th>מוצר</th><th>שווי</th><th>תשואה מתחילת השנה</th><th>נזילות</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>דרור — אלטשולר (ישנה)</td>
+              <td>__HISHTALMUT_DROR_F1__</td>
+              <td class="c-green">+1.0%</td>
+              <td class="c-green" style="font-size:11px">✓ נזיל</td>
+            </tr>
+            <tr>
+              <td>דרור — אלטשולר (חדשה)</td>
+              <td>__HISHTALMUT_DROR_F2__</td>
+              <td class="c-green">+1.0%</td>
+              <td class="c-yellow" style="font-size:11px">🔒 ינואר 2027</td>
+            </tr>
+            <tr>
+              <td>ליאת — אלטשולר</td>
+              <td>__HISHTALMUT_LIAT__</td>
+              <td class="c-red">−1.8%</td>
+              <td class="c-muted" style="font-size:11px">—</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td class="c-muted" style="font-size:10px">סה״כ השתלמות</td>
+              <td class="c-gold">__HISHTALMUT_TOTAL__</td>
+              <td></td><td></td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <!-- MONTHLY DEPOSITS -->
+        <div style="background:var(--bg4);border-radius:7px;padding:11px;margin-top:12px;font-size:13px;line-height:1.9">
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px">הפקדות חודשיות</div>
+          <div style="display:flex;justify-content:space-between">
+            <span class="c-muted">סה״כ הפקדות החודש:</span>
+            <span class="c-gold" style="font-family:var(--mono);font-weight:600">__PENSION_MONTHLY__</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px">
+            <span class="c-muted">שינוי מחודש קודם:</span>
+            <span class="c-green">__PENSION_CHG__</span>
+          </div>
+          <div style="font-size:10px;color:var(--muted);margin-top:8px;line-height:1.6">
+            הזינוק ב-₪979K בפנסיה דרור מיוחס לעדכון שנתי או תיקון נתון ולא לתשואה חודשית רגילה — בדוק מול הגוף המנהל.
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /portfolio-grid -->
+
+  <!-- EXPENSES SECTION -->
+  <div class="section-label">הוצאות החודש</div>
+  <div class="exp-grid">
+    <div class="exp-card">
+      <div class="exp-card-title">Top 5 — רכישות גדולות</div>
+__TOP5_ROWS__
+    </div>
+    <div class="exp-card">
+      <div class="exp-card-title">Top 3 — קטגוריות</div>
+      <div class="cat-total-change">
+        <span style="color:var(--muted);font-size:12px">סה״כ אשראי ממרץ:</span>
+        <span class="c-green">▼14.8%</span>
+      </div>
+__TOP3_ROWS__
+      <div class="cat-changes-row">שינוי ממרץ: מזון <span class="c-red">▼30.6%</span> | פנאי <span class="c-green">▲22.9%</span> | מסעדות <span class="c-green">▲44.1%</span></div>
+
+      <!-- SPENDING TREND TOGGLE -->
+      <div class="trend-toggle" onclick="toggleTrend()">
+        <span id="trend-chevron">▶</span>
+        <span>מגמת הוצאות 3 חודשים — ינואר עד מרץ</span>
+      </div>
+      <div class="trend-body" id="trend-body">
+        <div id="chart-spending-trend"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DECISIONS -->
+  <div class="section-label">החלטות פעולה</div>
+
+  <div class="decision-row" id="row-invest">
+    <div class="d-header" onclick="toggle('row-invest')">
+      <div class="tdot green"></div>
+      <div class="d-title">השקעה חודשית — ACWI</div>
+      <span class="badge act">השקע ב-15 לחודש</span>
+      <div class="d-chevron">▼</div>
+      <div class="d-status">עודף: __INVEST_SURPLUS__ | מרחק ליעד: __TARGET_DIST__ | __STOCKS_PCT__% מניות / __MM_PCT__% כספית</div>
+    </div>
+    <div class="d-body">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('invest','details',this)">פירוט</button>
+        <button class="tab-btn" onclick="switchTab('invest','macro',this)">ניתוח שוק גלובלי</button>
+      </div>
+      <div class="tab-pane active" id="invest-details">
+        <div class="detail-grid">
+          <div class="dcard"><div class="dcard-label">להשקעה ב-15.4</div><div class="dcard-value c-green">__INVEST_SURPLUS__</div></div>
+          <div class="dcard"><div class="dcard-label">מרחק ליעד ₪2M</div><div class="dcard-value c-yellow">__TARGET_DIST__</div></div>
+          <div class="dcard"><div class="dcard-label">זמן משוער ליעד</div><div class="dcard-value">1.7 שנים</div></div>
+        </div>
+        <div class="prog-wrap">
+          <div class="prog-label">התקדמות ליעד ₪2,000,000</div>
+          <div class="prog-track"><div class="prog-fill" style="width:__INVEST_PCT__%;background:var(--green)"></div></div>
+          <div class="prog-info"><span>₪0</span><span class="c-green" style="font-weight:700">__INVEST_PCT__%</span><span>₪2M</span></div>
+        </div>
+        <div class="note">רווח מצטבר: __CUMUL_GAIN__ | תשואה מקנייה: __RETURN_PCT__ | תשואה חודשית: __MONTHLY_RET__</div>
+      </div>
+      <div class="tab-pane" id="invest-macro">
+        <div class="macro-box">
+          <div class="macro-title">ניתוח שוק גלובלי — אפריל 2026</div>
+          <div class="macro-signal-row">
+            <div class="tdot yellow" style="width:15px;height:15px;box-shadow:0 0 9px var(--yellow)"></div>
+            <div class="macro-signal-label c-yellow">סיגנל צהוב — פרוס בהדרגה</div>
+          </div>
+          <div class="macro-indicators">
+            <div class="mi-card"><div class="mi-label">VIX</div><div class="mi-value c-red">~32</div><div class="mi-sub">גבוה</div></div>
+            <div class="mi-card"><div class="mi-label">ACWI מהשיא</div><div class="mi-value c-yellow">−15%</div><div class="mi-sub">מתון</div></div>
+            <div class="mi-card"><div class="mi-label">S&amp;P 200-day</div><div class="mi-value c-red">מתחת</div><div class="mi-sub">שלילי</div></div>
+            <div class="mi-card"><div class="mi-label">Shiller CAPE</div><div class="mi-value c-yellow">~26</div><div class="mi-sub">יקר מעט</div></div>
+          </div>
+          <div class="macro-body">
+            <p><strong>מצב השוק:</strong> תנודתיות גבוהה עקב מלחמת סחר. ה-VIX ב-32 מצביע על פאניקה בינונית אך לא קיצונית. ירידה של 15% מהשיא — הזדמנות סבירה לטווח ארוך.</p>
+            <p><strong>סיכונים:</strong> הסלמה בסחר / מיתון אמריקאי / האטה בסין. כל אחד יכול להוסיף 15-25% ירידה.</p>
+            <p><strong>הזדמנויות:</strong> הסכם סחר / הורדת ריביות / ריבאונד סין — כל אחד יכול להוביל לעלייה מהירה.</p>
+          </div>
+          <div class="strategy-box">
+            <p>• __INVEST_SURPLUS__ החודשי — כנס כרגיל ב-15 לחודש ללא תנאי.</p>
+            <p style="margin-top:6px">• ₪160K העודף מהכספית — __KASPIYOT_DEPLOY_NOTE__.</p>
+          </div>
+          <div class="macro-generated">⚙️ מופק דרך main.py חודשית</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row-connector">קשר ישיר — עודף בקרן הביטחון מגדיל פוטנציאל ההשקעה ב-ACWI</div>
+
+  <div class="decision-row" id="row-mm">
+    <div class="d-header" onclick="toggle('row-mm')">
+      <div class="tdot yellow"></div>
+      <div class="d-title">קרן ביטחון — פריסה לשוק המניות</div>
+      <span class="badge watch">עקוב אחר השוק</span>
+      <div class="d-chevron">▼</div>
+      <div class="d-status">קיים: __KASPIYOT__ | יעד: ₪350K | עודף לפריסה: __KASPIYOT_EXCESS__</div>
+    </div>
+    <div class="d-body">
+      <div class="detail-grid">
+        <div class="dcard"><div class="dcard-label">כספית נוכחית</div><div class="dcard-value c-yellow">__KASPIYOT__</div></div>
+        <div class="dcard"><div class="dcard-label">יעד (6 חודשי הוצאות)</div><div class="dcard-value">₪350,000</div></div>
+        <div class="dcard"><div class="dcard-label">פנוי לפריסה</div><div class="dcard-value c-green">__KASPIYOT_EXCESS__</div></div>
+      </div>
+      <div class="strategy-box">
+        <p><strong>אפשרות א׳ — הדרגתי (מומלץ כרגע):</strong> ₪53K × 3 חודשים לתוך ACWI.</p>
+        <p style="margin-top:8px"><strong>אפשרות ב׳ — חד-פעמי:</strong> המתן לסיגנל ירוק (VIX מתחת ל-20, ACWI מעל 200-day MA).</p>
+        <p style="margin-top:8px;color:var(--muted)">לאחר פריסה: כספית → ₪350K, יחס → 88%/12%</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="decision-row" id="row-rsu">
+    <div class="d-header" onclick="toggle('row-rsu')">
+      <div class="tdot red" id="rsu-dot"></div>
+      <div class="d-title">RSU — Align Technology (ALGN)</div>
+      <span class="badge wait" id="rsu-badge">המתן</span>
+      <div class="d-chevron">▼</div>
+      <div class="d-status" id="rsu-header-status">__ALGN_PRICE__ | יעד: $300 | __RSU_PCT_FROM_TARGET__ | 4 פעימות חופשיות</div>
+    </div>
+    <div class="d-body">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('rsu','details',this)">פירוט פעימות</button>
+        <button class="tab-btn" onclick="switchTab('rsu','macro',this)">ניתוח ALGN</button>
+      </div>
+      <div class="tab-pane active" id="rsu-details">
+        <div class="slider-row">
+          <span class="slider-label">מחיר יעד:</span>
+          <input type="range" min="150" max="600" value="300" id="rsu-slider" oninput="syncSlider(+this.value)">
+          <span class="slider-val" id="rsu-slider-val">$300</span>
+        </div>
+        <div class="table-wrap">
+        <table class="dtable">
+          <thead><tr>
+            <th>פעימה</th><th>מניות</th><th>בסיס</th><th>רו״ה/מניה</th>
+            <th>ברוטו</th><th>מס 25%</th><th>נטו $</th><th>נטו ₪</th><th>סטטוס</th>
+          </tr></thead>
+          <tbody id="rsu-tbody"></tbody>
+          <tfoot id="rsu-tfoot"></tfoot>
+        </table>
+        </div>
+        <div class="note">הפסדים מ-2021+2022 מקזזים רווחים מ-2023+2024 — מס אפקטיבי כמעט אפס ב-$300.<br>פעימת 2025 נעולה עד 20.2.2027. מכירה לפני כן = מס שולי 47%.</div>
+      </div>
+      <div class="tab-pane" id="rsu-macro">
+        <div class="macro-box">
+          <div class="macro-title">ניתוח מאקרו — ALGN</div>
+          <div class="macro-signal-row">
+            <div class="tdot red" style="width:15px;height:15px;box-shadow:0 0 9px var(--red)"></div>
+            <div class="macro-signal-label c-red">$300 לא ריאלי בטווח הקצר</div>
+          </div>
+          <div class="macro-indicators">
+            <div class="mi-card"><div class="mi-label">מחיר נוכחי</div><div class="mi-value">$184.69</div><div class="mi-sub">−75% מהשיא</div></div>
+            <div class="mi-card"><div class="mi-label">יעד אנליסטים</div><div class="mi-value c-yellow">~$200</div><div class="mi-sub">ממוצע</div></div>
+            <div class="mi-card"><div class="mi-label">מרחק ל-$300</div><div class="mi-value c-red">+63%</div><div class="mi-sub">מהמחיר כיום</div></div>
+            <div class="mi-card"><div class="mi-label">Elliott</div><div class="mi-value c-green">נכנס</div><div class="mi-sub">מרץ 2026</div></div>
+          </div>
+          <div class="macro-body">
+            <p>ALGN ירדה ~75% מהשיא. Elliott נכנסה כאקטיביסטית — סיגנל אפסייד, אך תהליך ארוך של 12-24 חודשים.</p>
+            <p><strong>המלצה טקטית:</strong> שקול יעד ביניים של $220-250 לפעימות 2021-2022 — אין מס כי אתה בהפסד על הבסיס. שמור $300+ לפעימות 2023-2024 שיש בהן רווח אמיתי.</p>
+          </div>
+          <div class="macro-generated">⚙️ מופק דרך main.py חודשית</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// ── DATA ──────────────────────────────────────────────────
+const MONTHS_SHORT = ['מאי','יוני','יולי','אוג','ספט','אוק','נוב','דצמ','ינו','פבר','מרץ'];
+const INCOME_DATA  = [60286,67535,64351,57578,57928,58148,81244,56284,87801,65696,163487];
+const EXPENSE_DATA = [28064,28940,35782,29394,38317,17991,40344,48171,74245,36921,45979];
+const SURPLUS_DATA = [32222,38595,28569,28183,19610,40157,40899,8113,13557,28775,117508];
+const INVEST_DATA  = [75185,32524,32736,10027,3339,14873,10764,30346,20747,21013,133245];
+const CUMUL_DATA   = [32222,70817,99386,127569,147180,187337,228236,236349,249906,278681,396189];
+
+const CATS = [
+  {name:'מזון וצריכה',   vals:[3470,2022,2640]},
+  {name:'מסעדות וקפה',   vals:[3741,4002,2237]},
+  {name:'פנאי ובידור',   vals:[254,1867,2294]},
+  {name:'אופנה',         vals:[759,1934,1040]},
+  {name:'טיסות ותיירות', vals:[3,4658,990]},
+  {name:'עירייה',        vals:[108,1792,1412]},
+  {name:'חשמל ומחשבים', vals:[5183,83,0]},
+  {name:'תקשורת',        vals:[86,171,312]},
+  {name:'שונות',         vals:[871,1418,443]},
+];
+const CAT_MONTHS = ['ינואר','פברואר','מרץ'];
+
+const CURRENT = 184.69, RATE = 3.0386;
+const TRANCHES = [
+  {label:'פבר 2021',shares:76, basis:538.71,locked:false},
+  {label:'פבר 2022',shares:99, basis:505.68,locked:false},
+  {label:'פבר 2023',shares:245,basis:282.30,locked:false},
+  {label:'פבר 2024',shares:362,basis:277.54,locked:false},
+  {label:'פבר 2025',shares:218,basis:217.32,locked:true,lockDate:'20.2.2027'},
+];
+
+// ── SVG CHART HELPERS ────────────────────────────────────
+// All charts use direction:ltr context (chart-card has direction:ltr)
+const CW=520, CH=165, CPL=52, CPR=10, CPT=38, CPB=28;
+const cwa=CW-CPL-CPR, cha=CH-CPT-CPB;
+
+function fmtK(v){
+  if(v===0) return '₪0';
+  return v>=100000?'₪'+Math.round(v/1000)+'K':v>=10000?'₪'+Math.round(v/1000)+'K':'₪'+Math.round(v/1000)+'K';
+}
+function fmtKs(v){ return v>=1000?'₪'+(v/1000).toFixed(v>=10000?0:1)+'K':'₪'+Math.round(v); }
+
+function yAxis(maxV){
+  let s='';
+  for(let g=0;g<=4;g++){
+    const y=CPT+cha-cha*g/4;
+    const val=maxV*g/4;
+    s+=`<line x1="${CPL}" y1="${y}" x2="${CW-CPR}" y2="${y}" stroke="#1e2438" stroke-width="${g===0?1:0.5}"/>`;
+    s+=`<text x="${CPL-5}" y="${y+4}" text-anchor="end" fill="#6b7897" font-size="9" font-family="JetBrains Mono,monospace">${fmtKs(val)}</text>`;
+  }
+  return s;
+}
+
+function svgSingle(data,labels,colorFn,maxV,legendItems){
+  const n=data.length, bw=Math.max(6,Math.floor(cwa/n*0.55)), gap=cwa/n;
+  let s=`<svg viewBox="0 0 ${CW} ${CH}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">`;
+  // legend at top
+  if(legendItems){
+    let lx=CPL; legendItems.forEach(({c,t})=>{
+      s+=`<rect x="${lx}" y="6" width="10" height="8" fill="${c}" rx="1"/>`;
+      s+=`<text x="${lx+13}" y="15" fill="#dce4f0" font-size="11" font-family="Heebo">${t}</text>`;
+      lx+=85;
+    });
+  }
+  s+=yAxis(maxV);
+  data.forEach((v,i)=>{
+    const x=CPL+i*gap+(gap-bw)/2;
+    const bh=Math.max(2,(v/maxV)*cha);
+    const y=CPT+cha-bh;
+    const c=typeof colorFn==='function'?colorFn(v,i):colorFn;
+    s+=`<rect x="${x}" y="${y}" width="${bw}" height="${bh}" fill="${c}" rx="2" opacity="0.85"/>`;
+    s+=`<text x="${x+bw/2}" y="${y-4}" text-anchor="middle" fill="${c}" font-size="8" font-family="JetBrains Mono,monospace">${fmtKs(v)}</text>`;
+    s+=`<text x="${x+bw/2}" y="${CPT+cha+16}" text-anchor="middle" fill="#6b7897" font-size="9" font-family="Heebo">${labels[i]}</text>`;
+  });
+  s+='</svg>'; return s;
+}
+
+function svgGroupedNew(d1,d2,labels,c1,c2,maxV,leg1,leg2){
+  const n=d1.length, groupW=cwa/n, bw=Math.max(5,Math.floor(groupW*0.34));
+  let s=`<svg viewBox="0 0 ${CW} ${CH}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">`;
+  // legend at top
+  s+=`<rect x="${CPL}" y="6" width="10" height="8" fill="${c1}" rx="1"/>`;
+  s+=`<text x="${CPL+14}" y="15" fill="#dce4f0" font-size="11" font-family="Heebo">${leg1}</text>`;
+  s+=`<rect x="${CPL+90}" y="6" width="10" height="8" fill="${c2}" rx="1"/>`;
+  s+=`<text x="${CPL+104}" y="15" fill="#dce4f0" font-size="11" font-family="Heebo">${leg2}</text>`;
+  s+=yAxis(maxV);
+  d1.forEach((v,i)=>{
+    const gx=CPL+i*groupW;
+    const x1=gx+(groupW-2*bw-2)/2, x2=x1+bw+2;
+    const h1=Math.max(2,(v/maxV)*cha), h2=Math.max(2,(d2[i]/maxV)*cha);
+    s+=`<rect x="${x1}" y="${CPT+cha-h1}" width="${bw}" height="${h1}" fill="${c1}" rx="2" opacity="0.85"/>`;
+    s+=`<rect x="${x2}" y="${CPT+cha-h2}" width="${bw}" height="${h2}" fill="${c2}" rx="2" opacity="0.85"/>`;
+    if(h1>18) s+=`<text x="${x1+bw/2}" y="${CPT+cha-h1-3}" text-anchor="middle" fill="${c1}" font-size="8" font-family="JetBrains Mono">${fmtKs(v)}</text>`;
+    if(h2>18) s+=`<text x="${x2+bw/2}" y="${CPT+cha-h2-3}" text-anchor="middle" fill="${c2}" font-size="8" font-family="JetBrains Mono">${fmtKs(d2[i])}</text>`;
+    s+=`<text x="${gx+groupW/2}" y="${CPT+cha+16}" text-anchor="middle" fill="#6b7897" font-size="9" font-family="Heebo">${labels[i]}</text>`;
+  });
+  s+='</svg>'; return s;
+}
+
+function svgStacked(d1,d2,labels,c1,c2,maxV,leg1,leg2){
+  const n=d1.length, bw=Math.max(7,Math.floor(cwa/n*0.6)), gap=cwa/n;
+  let s=`<svg viewBox="0 0 ${CW} ${CH}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">`;
+  s+=`<rect x="${CPL}" y="6" width="10" height="8" fill="${c1}" rx="1"/>`;
+  s+=`<text x="${CPL+14}" y="15" fill="#dce4f0" font-size="11" font-family="Heebo">${leg1}</text>`;
+  s+=`<rect x="${CPL+90}" y="6" width="10" height="8" fill="${c2}" rx="1"/>`;
+  s+=`<text x="${CPL+104}" y="15" fill="#dce4f0" font-size="11" font-family="Heebo">${leg2}</text>`;
+  s+=yAxis(maxV);
+  d1.forEach((v,i)=>{
+    const x=CPL+i*gap+(gap-bw)/2;
+    const h1=Math.max(2,(v/maxV)*cha), h2=Math.max(2,(d2[i]/maxV)*cha);
+    const total=v+d2[i];
+    const totalH=h1+h2;
+    // Insightech on top (blue)
+    if(d2[i]>0){
+      s+=`<rect x="${x}" y="${CPT+cha-h1-h2}" width="${bw}" height="${h2}" fill="${c2}" rx="2 2 0 0" opacity="0.8"/>`;
+    }
+    // Align on bottom (gold)
+    s+=`<rect x="${x}" y="${CPT+cha-h1}" width="${bw}" height="${h1}" fill="${c1}" rx="${d2[i]>0?'0':'2 2 0 0'}" opacity="0.85"/>`;
+    // Total value label above bar
+    s+=`<text x="${x+bw/2}" y="${CPT+cha-totalH-4}" text-anchor="middle" fill="#dce4f0" font-size="9" font-family="JetBrains Mono,monospace">${fmtKs(total)}</text>`;
+    // Month label
+    s+=`<text x="${x+bw/2}" y="${CPT+cha+16}" text-anchor="middle" fill="#6b7897" font-size="9" font-family="Heebo">${labels[i]}</text>`;
+  });
+  s+='</svg>'; return s;
+}
+
+function renderTrendTable(){
+  const maxV=Math.max(...CATS.flatMap(c=>c.vals));
+  const colors=['#e8c47e','#7baad4','#3bbd6e'];
+  let h=`<table class="trend-tbl"><thead><tr><th>קטגוריה</th>`;
+  ['ינואר','פברואר','מרץ'].forEach((m,i)=>{ h+=`<th style="color:${colors[i]}">${m}</th>`; });
+  h+='</tr></thead><tbody>';
+  CATS.forEach(cat=>{
+    h+=`<tr><td>${cat.name}</td>`;
+    cat.vals.forEach((v,i)=>{
+      const pct=maxV>0?(v/maxV*100).toFixed(0):0;
+      h+=`<td><div class="tbar-wrap">
+        <div class="tbar" style="width:${Math.max(pct,v>0?4:0)}%;background:${colors[i]}"></div>
+        <span class="tbar-val" style="color:${colors[i]}">${v>0?'₪'+Math.round(v).toLocaleString():'-'}</span>
+      </div></td>`;
+    });
+    h+='</tr>';
+  });
+  h+='</tbody></table>';
+  return h;
+}
+
+// ── RENDER ALL CHARTS ─────────────────────────────────────
+function renderCharts(){
+  const ALIGN  = [44130,51307,46339,41521,41803,41527,40085,40217,41527,49642,160378];
+  const INSIGH = [15856,15941,17723,15765,15856,15800,15852,15733,15925,15745,0];
+  const maxInc = Math.max(...INCOME_DATA)*1.08;
+  const maxSur = Math.max(...SURPLUS_DATA)*1.12;
+  const maxInv = Math.max(...INVEST_DATA)*1.12;
+  const maxSrc = Math.max(...ALIGN.map((v,i)=>v+INSIGH[i]))*1.08;
+
+  document.getElementById('chart-inc-exp').innerHTML =
+    svgGroupedNew(INCOME_DATA,EXPENSE_DATA,MONTHS_SHORT,'#3bbd6e','#e05555',maxInc,'הכנסות','הוצאות');
+  document.getElementById('chart-surplus').innerHTML =
+    svgSingle(SURPLUS_DATA,MONTHS_SHORT,v=>v>80000?'#e8c47e':v>30000?'#3bbd6e':'#7baad4',maxSur,null);
+  document.getElementById('chart-income-src').innerHTML =
+    svgStacked(ALIGN,INSIGH,MONTHS_SHORT,'#e8c47e','#7baad4',maxSrc,'Align','Insightech');
+  document.getElementById('chart-investments').innerHTML =
+    svgSingle(INVEST_DATA,MONTHS_SHORT,'#7baad4',maxInv,null);
+  document.getElementById('chart-income-trend').innerHTML =
+    svgStacked(ALIGN,INSIGH,MONTHS_SHORT,'#e8c47e','#7baad4',maxSrc,'Align','Insightech');
+  document.getElementById('chart-spending-trend').innerHTML = renderTrendTable();
+  document.getElementById('chart-spending-trend').innerHTML = svgSpendingTrend();
+}
+
+// ── INTERACTIONS ──────────────────────────────────────────
+function toggleStripPanel(key){
+  const panel=document.getElementById('panel-'+key);
+  const cell=document.getElementById('sc-'+key);
+  const other=key==='income'?'expenses':'income';
+  const otherPanel=document.getElementById('panel-'+other);
+  const otherCell=document.getElementById('sc-'+other);
+  if(panel.classList.contains('open')){
+    panel.classList.remove('open'); cell.classList.remove('active');
+  } else {
+    otherPanel.classList.remove('open'); otherCell.classList.remove('active');
+    panel.classList.add('open'); cell.classList.add('active');
+    // Render charts on first open regardless of which panel triggered it
+    if(!chartsRendered){renderCharts();chartsRendered=true;}
+  }
+}
+
+let chartsRendered=false;
+function togglePC(key){
+  const el=document.getElementById('pc-'+key);
+  // Close all others first
+  ['trading','leumi','rsu','pension'].forEach(k=>{
+    if(k!==key) document.getElementById('pc-'+k)?.classList.remove('open');
+  });
+  el.classList.toggle('open');
+  if(!chartsRendered){renderCharts();chartsRendered=true;}
+}
+
+function toggleTrend(){
+  const body=document.getElementById('trend-body');
+  const chev=document.getElementById('trend-chevron');
+  const isOpen=body.classList.toggle('open');
+  chev.textContent=isOpen?'▼':'▶';
+  if(!chartsRendered){renderCharts();chartsRendered=true;}
+}
+
+function toggle(id){document.getElementById(id).classList.toggle('open');}
+
+function switchTab(prefix,pane,btn){
+  const row=document.getElementById('row-'+prefix);
+  row.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  row.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(prefix+'-'+pane).classList.add('active');
+}
+
+function syncSlider(val){
+  // Keep both sliders (pcard + decision row) in sync
+  const s1=document.getElementById('rsu-slider');
+  const s2=document.getElementById('rsu-slider2');
+  if(s1) s1.value=val;
+  if(s2) s2.value=val;
+  renderRSU(val);
+}
+
+// ── RSU ───────────────────────────────────────────────────
+const fD=n=>(n<0?'($':'$')+Math.abs(Math.round(n)).toLocaleString()+(n<0?')':'');
+const fN=n=>(n<0?'(₪':'₪')+Math.abs(Math.round(n)).toLocaleString()+(n<0?')':'');
+
+function renderRSU(target){
+  document.getElementById('rsu-slider-val').textContent='$'+target;
+  const pct=((target-CURRENT)/CURRENT*100);
+  document.getElementById('rsu-header-status').textContent=
+    `$${CURRENT} | יעד: $${target} | ${pct>=0?'+':'−'}${Math.abs(pct).toFixed(0)}% מהנוכחי | 4 פעימות חופשיות`;
+  const dot=document.getElementById('rsu-dot'),badge=document.getElementById('rsu-badge');
+  if(CURRENT>=target){dot.className='tdot green';badge.className='badge act';badge.textContent='מכור עכשיו';}
+  else if(CURRENT>=target*.92){dot.className='tdot yellow';badge.className='badge watch';badge.textContent='התכונן';}
+  else{dot.className='tdot red';badge.className='badge wait';badge.textContent='המתן';}
+
+  const free=TRANCHES.filter(t=>!t.locked).map(t=>{
+    const gainPer=target-t.basis,totalGain=gainPer*t.shares,gross=target*t.shares;
+    const taxRow=totalGain>0?totalGain*0.25:0,netRow=gross-taxRow;
+    return{...t,gainPer,totalGain,gross,taxRow,netRow};
+  });
+  const lossPool=free.reduce((s,t)=>s+(t.totalGain<0?t.totalGain:0),0);
+  const gainPool=free.reduce((s,t)=>s+(t.totalGain>0?t.totalGain:0),0);
+  const netTaxable=Math.max(0,gainPool+lossPool),totalTax=netTaxable*0.25;
+  const totGross=free.reduce((s,t)=>s+t.gross,0),totNet=totGross-totalTax;
+
+  let html='';
+  free.forEach(t=>{
+    const gl=t.gainPer>=0?`<span class="c-green">+${fD(t.gainPer)}</span>`:`<span class="c-red">(${fD(Math.abs(t.gainPer))})</span>`;
+    const tc=t.taxRow>0?`<span class="c-red">(${fD(t.taxRow)})</span>`:`<span class="c-green">אין</span>`;
+    html+=`<tr><td>${t.label}</td><td>${t.shares}</td><td class="c-muted">$${t.basis}</td><td>${gl}</td><td>${fD(t.gross)}</td><td>${tc}</td><td class="c-green">${fD(t.netRow)}</td><td style="font-size:12px">${fN(t.netRow*RATE)}</td><td class="c-green" style="font-size:11px">✓</td></tr>`;
+  });
+  const lk=TRANCHES.find(t=>t.locked);
+  html+=`<tr><td>${lk.label}</td><td class="c-muted">${lk.shares}</td><td class="c-muted">$${lk.basis}</td><td class="c-muted">—</td><td class="c-muted">${fD(target*lk.shares)}</td><td class="c-muted">—</td><td class="c-muted">—</td><td class="c-muted">—</td><td style="color:var(--red);font-size:11px">🔒 ${lk.lockDate}</td></tr>`;
+  document.getElementById('rsu-tbody').innerHTML=html;
+  const saving=free.reduce((s,t)=>s+t.taxRow,0)-totalTax;
+  const footHtml=`<tr><td colspan="3" class="c-muted" style="font-size:11px">4 פעימות | קיזוז: ${fD(saving)}</td><td></td><td class="c-gold">${fD(totGross)}</td><td class="c-red">${totalTax>0?'('+fD(totalTax)+')':'<span class=c-green>אפס</span>'}</td><td class="c-green">${fD(totNet)}</td><td class="c-green">${fN(totNet*RATE)}</td><td></td></tr>`;
+  document.getElementById('rsu-tfoot').innerHTML=footHtml;
+  // Mirror to pcard table if it exists
+  const tb2=document.getElementById('rsu-tbody2');
+  const tf2=document.getElementById('rsu-tfoot2');
+  const sv2=document.getElementById('rsu-slider-val2');
+  if(tb2) tb2.innerHTML=html;
+  if(tf2) tf2.innerHTML=footHtml;
+  if(sv2) sv2.textContent='$'+target;
+}
+
+renderRSU(300);
+</script>
+</body>
+</html>
