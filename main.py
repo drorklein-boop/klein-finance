@@ -1,4 +1,4 @@
-# Klein Finance - Monthly Sheet Updater v8.12
+# Klein Finance - Monthly Sheet Updater v8.13
 import sys, shutil, datetime, json, base64, re, warnings
 warnings.filterwarnings('ignore')
 from pathlib import Path
@@ -250,21 +250,19 @@ def read_file(ftype, fpath):
     is_htm = fname.endswith('.htm') or fname.endswith('.html')
     if is_htm:
         import pandas as pd
+        # Excel frameset exports: real data is in _files/sheet001.htm
+        stem = fpath.stem  # e.g. "ריכוז יתרות 21-05-2026"
+        sheet_path = fpath.parent / (stem + '_files') / 'sheet001.htm'
+        read_path = sheet_path if sheet_path.exists() else fpath
+        print(f"  HTM reading: {read_path.name}")
         try:
-            tables = pd.read_html(str(fpath), encoding='utf-8')
+            tables = pd.read_html(str(read_path), encoding='utf-8')
         except Exception as e1:
-            print(f"  HTM utf-8 failed: {e1}")
             try:
-                tables = pd.read_html(str(fpath), encoding='windows-1255')
+                tables = pd.read_html(str(read_path), encoding='windows-1255')
             except Exception as e2:
-                print(f"  HTM windows-1255 failed: {e2}")
-                try:
-                    raw_html = fpath.read_bytes().decode('windows-1255', errors='replace')
-                    import io
-                    tables = pd.read_html(io.StringIO(raw_html))
-                except Exception as e3:
-                    print(f"  HTM StringIO failed: {e3}")
-                    return {}
+                print(f"  HTM failed: {e2}")
+                return {}
         print(f"  HTM: found {len(tables)} table(s)")
         for i, tbl in enumerate(tables):
             print(f"  HTM table {i}: cols={list(tbl.columns)[:5]}  rows={len(tbl)}")
@@ -334,7 +332,7 @@ def write_sheet(xw_wb, name, data):
             xw_wb.app.screen_updating = True
 
 def main():
-    print("\n  Klein Finance - Monthly Update v8.12")
+    print("\n  Klein Finance - Monthly Update v8.13")
     print("  =====================================")
 
     try:
@@ -370,21 +368,6 @@ def main():
     if src.exists():
         shutil.copy2(src, backup_dir / f"backup_{ts}.xlsm")
         print("  Backup saved")
-
-    # Dump .htm file content for diagnosis
-    for _f in MONTHLY.iterdir():
-        if _f.suffix.lower() in ('.htm', '.html') and _f.stat().st_size < 500000:
-            try:
-                _raw = _f.read_bytes()
-                for _enc in ('utf-8', 'windows-1255', 'cp1255'):
-                    try:
-                        _txt = _raw.decode(_enc)
-                        print(f"\n  HTM FILE: {_f.name} ({len(_raw)} bytes, enc={_enc})")
-                        print(f"  FIRST 800 CHARS: {repr(_txt[:800])}")
-                        break
-                    except: continue
-            except Exception as _e:
-                print(f"  HTM read error {_f.name}: {_e}")
 
     tracker = load_tracker()
     # Self-heal: remove any .htm/.html entries from tracker so they always re-check
