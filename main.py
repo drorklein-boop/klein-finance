@@ -1,4 +1,4 @@
-# Klein Finance - Monthly Sheet Updater v8.15
+# Klein Finance - Monthly Sheet Updater v8.16
 import sys, shutil, datetime, json, base64, re, warnings
 warnings.filterwarnings('ignore')
 from pathlib import Path
@@ -325,6 +325,10 @@ def write_sheet(xw_wb, name, data):
             ws.range('A2').value = data
             xw_wb.app.calculation = 'automatic'
             xw_wb.app.screen_updating = True
+        # Change 2: validate write
+        check = ws.range('A2').value
+        if check is None:
+            raise ValueError(f"Validation failed: {name} A2 is empty after write")
     else:
         ws.clear_contents()
         if data:
@@ -333,9 +337,13 @@ def write_sheet(xw_wb, name, data):
             ws.range('A1').value = data
             xw_wb.app.calculation = 'automatic'
             xw_wb.app.screen_updating = True
+        # Change 2: validate write
+        check = ws.range('A1').value
+        if check is None:
+            raise ValueError(f"Validation failed: {name} A1 is empty after write")
 
 def main():
-    print("\n  Klein Finance - Monthly Update v8.15")
+    print("\n  Klein Finance - Monthly Update v8.16")
     print("  =====================================")
 
     try:
@@ -385,6 +393,16 @@ def main():
     if not new_files:
         print("\n  No new or changed files since last run.")
         input("\n  Press Enter to close..."); return
+
+    # MANIFEST — print every file in MONTHLY with detected type
+    print("\n  MONTHLY folder manifest:")
+    for f in sorted(all_files, key=lambda x: x.name):
+        ftype_m = detect(f)
+        status = ftype_m if ftype_m else "UNDETECTED"
+        print(f"    {status:<18} {f.name} ({f.stat().st_size:,} bytes)")
+    undetected = [f for f in all_files if not detect(f)]
+    if undetected:
+        print(f"  WARNING: {len(undetected)} file(s) not recognised — will be skipped")
 
     print(f"\n  New/changed files: {len(new_files)}")
 
@@ -436,6 +454,15 @@ def main():
             results.append(f"  ERROR {ftype} ({fpath.name}): {e}")
 
     wb.save()
+
+    # Change 5: archive last known good source file after successful write
+    last_good_dir = BASE / "last_good"
+    last_good_dir.mkdir(exist_ok=True)
+    for fname in successfully_processed:
+        src_file = MONTHLY / fname
+        if src_file.exists():
+            import shutil as _sh
+            _sh.copy2(src_file, last_good_dir / fname)
 
     updated_tracker = dict(tracker)
     for f in all_files:
