@@ -8,14 +8,12 @@ BASE = Path(__file__).parent
 VBA_CODE = """
 Sub RunDashboard()
     Dim wsh As Object
-    Dim script As String
-    script = "C:\\KleinFinance\\launcher_dashboard.py"
-    If Dir(script) = "" Then
+    If Dir("C:\\KleinFinance\\launcher_dashboard.py") = "" Then
         MsgBox "launcher_dashboard.py not found in C:\\KleinFinance\\", vbCritical
         Exit Sub
     End If
     Set wsh = CreateObject("WScript.Shell")
-    wsh.Run "cmd /k python \"" & script & "\"", 1, False
+    wsh.Run "cmd /k python C:\\KleinFinance\\launcher_dashboard.py", 1, False
     Set wsh = Nothing
 End Sub
 """
