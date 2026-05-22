@@ -7,7 +7,7 @@ BASE = Path(__file__).parent
 
 def read_workbook():
     import openpyxl
-    xlsm = next(BASE.glob('*.xlsm'), None)
+    xlsm = next((f for f in BASE.glob('*.xlsm') if not f.name.startswith('~')), None)
     if not xlsm:
         print("ERROR: No .xlsm file found in", BASE)
         return None
