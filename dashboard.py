@@ -44,22 +44,32 @@ def k(n):
     except: return '₪0K'
 
 def read_workbook():
+    import xlwings as xw
     import openpyxl
     xlsm = next((f for f in BASE.glob('*.xlsm') if not f.name.startswith('~')), None)
     if not xlsm:
         print('ERROR: No .xlsm file found'); return None
-    wb = openpyxl.load_workbook(xlsm, read_only=True, data_only=True)
+    # Use xlwings for formula cells (live values), openpyxl for data-only sheets
+    xw_app = xw.apps.active
+    if not xw_app:
+        print('  ERROR: Excel must be open to generate dashboard')
+        return None
+    xw_wb = next((b for b in xw_app.books if b.name.lower().endswith('.xlsm')), None)
+    if not xw_wb:
+        print('  ERROR: No .xlsm workbook open in Excel')
+        return None
 
-    rsu  = wb['ALIGN RSU']
-    ws_r = wb['דוח חודשי']
-    rows = list(ws_r.iter_rows(values_only=True))
+    ws_xw = xw_wb.sheets['דוח חודשי']
 
-    # Row helper (0-indexed)
     def r(row_1based, col_1based):
         try:
-            val = rows[row_1based-1][col_1based-1]
+            val = ws_xw.range((row_1based, col_1based)).value
             return float(val) if isinstance(val, (int, float)) else val
         except: return None
+
+    # Also open with openpyxl for sheets that don't have formulas
+    wb = openpyxl.load_workbook(xlsm, read_only=True, data_only=True)
+    rsu  = wb['ALIGN RSU']
 
     d = {}
     d['period']          = r(3, 4) or datetime.date.today().strftime('%B %Y')
@@ -129,21 +139,24 @@ def read_workbook():
 
     # Top 5
     d['top5'] = []
-    for row in rows:
-        if row[0] and isinstance(row[0], int) and 1 <= row[0] <= 5 and row[1] and row[2]:
-            d['top5'].append({'name': str(row[1]), 'amount': float(row[2]), 'source': str(row[3] or '')})
+    for row_i in range(13, 18):  # rows 13-17
+        rank = ws_xw.range((row_i, 1)).value
+        name = ws_xw.range((row_i, 2)).value
+        amt  = ws_xw.range((row_i, 3)).value
+        src  = ws_xw.range((row_i, 4)).value
+        if rank and isinstance(rank, (int,float)) and name and amt:
+            d['top5'].append({'name': str(name), 'amount': float(amt), 'source': str(src or '')})
 
     # Top 3 cats
     d['top3'] = []
-    in_cats = False
-    for row in rows:
-        if row[0] and 'Top 3 קטגוריות' in str(row[0]): in_cats = True; continue
-        if row[0] == 'קטגוריה': continue
-        if in_cats and row[0] and isinstance(row[1], (int, float)):
-            prev = float(row[3]) if row[3] and isinstance(row[3], (int,float)) else 0
-            d['top3'].append({'name': str(row[0]), 'amount': float(row[1]),
-                              'pct': float(row[2] or 0), 'prev_pct': prev})
-        if len(d['top3']) >= 3: break
+    for row_i in range(20, 23):  # rows 20-22
+        name = ws_xw.range((row_i, 1)).value
+        amt  = ws_xw.range((row_i, 2)).value
+        pct_ = ws_xw.range((row_i, 3)).value
+        prev = ws_xw.range((row_i, 4)).value
+        if name and amt and isinstance(amt, (int,float)):
+            d['top3'].append({'name': str(name), 'amount': float(amt),
+                              'pct': float(pct_ or 0), 'prev_pct': float(prev or 0)})
 
     # Holdings
     d['holdings'] = []
