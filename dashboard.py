@@ -62,10 +62,8 @@ def read_workbook():
     ws_xw = xw_wb.sheets['דוח חודשי']
 
     def r(row_1based, col_1based):
-        try:
-            val = ws_xw.range((row_1based, col_1based)).value
-            return float(val) if isinstance(val, (int, float)) else val
-        except: return None
+        val = ws_xw.range((row_1based, col_1based)).value
+        return val
 
     # Also open with openpyxl for sheets that don't have formulas
     wb = openpyxl.load_workbook(xlsm, read_only=True, data_only=True)
@@ -75,6 +73,7 @@ def read_workbook():
     d['period']          = r(3, 4) or datetime.date.today().strftime('%B %Y')
     d['report_date']     = str(r(3, 2) or datetime.date.today().strftime('%d.%m.%Y'))
     d['income']          = float(r(6, 2) or 0)   # B6
+    print(f'  DEBUG B6 income: {r(6,2)}')
     d['expenses']        = float(r(7, 2) or 0)   # B7
     d['surplus']         = float(r(8, 2) or 0)   # B8
     d['savings_rate']    = float(r(9, 2) or 0)   # B9
