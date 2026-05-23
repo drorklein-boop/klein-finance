@@ -50,41 +50,47 @@ def read_workbook():
         print('ERROR: No .xlsm file found'); return None
     wb = openpyxl.load_workbook(xlsm, read_only=True, data_only=True)
 
-    ws_d = wb['דשבורד']
     rsu  = wb['ALIGN RSU']
     ws_r = wb['דוח חודשי']
     rows = list(ws_r.iter_rows(values_only=True))
 
-    def v(label, col=1):
-        for row in rows:
-            if row[0] and label in str(row[0]):
-                val = row[col] if col < len(row) else None
-                return float(val) if isinstance(val, (int, float)) else val
-        return None
+    # Row helper (0-indexed)
+    def r(row_1based, col_1based):
+        try:
+            val = rows[row_1based-1][col_1based-1]
+            return float(val) if isinstance(val, (int, float)) else val
+        except: return None
 
     d = {}
-    d['period']          = v('תקופה:', 3) or datetime.date.today().strftime('%B %Y')
-    d['report_date']     = str(v('תאריך הפקה:', 1) or datetime.date.today().strftime('%d.%m.%Y'))
-    d['income']          = float(v('הכנסות') or 0)
-    d['expenses']        = float(v('הוצאות') or 0)
-    d['surplus']         = float(v('יתרה חודשית') or 0)
-    d['savings_rate']    = float(v('יחס חיסכון') or 0)
-    d['portfolio_val']   = float(v('שווי תיק מסחר', 1) or 0)
-    d['kaspiyot']        = float(v('שווי תיק מסחר', 3) or 0)
-    d['portfolio_chg']   = float(v('שינוי מחודש קודם') or 0)
-    d['cumulative_gain'] = float(v('רווח מצטבר') or 0)
-    d['return_pct']      = float(v('תשואה מקניה', 3) or 0)
-    d['monthly_return']  = float(v('תשואה חודשית:', 3) or 0)
-    d['target_dist']     = float(v('מרחק ליעד') or 0)
-    d['invest_surplus']  = float(v('עודף להשקעה', 10) or 0)
-    d['bank_free']       = float(v('יתרה פנויה', 10) or 0)
-    d['exp_credit']      = abs(float(v('חיובי אשראי חוץ-בנקאיים', 10) or 0)) + abs(float(v('חיובי אשראי בנקאיים', 10) or 0))
+    d['period']          = r(3, 4) or datetime.date.today().strftime('%B %Y')
+    d['report_date']     = str(r(3, 2) or datetime.date.today().strftime('%d.%m.%Y'))
+    d['income']          = float(r(6, 2) or 0)   # B6
+    d['expenses']        = float(r(7, 2) or 0)   # B7
+    d['surplus']         = float(r(8, 2) or 0)   # B8
+    d['savings_rate']    = float(r(9, 2) or 0)   # B9
+    d['portfolio_val']   = float(r(25, 2) or 0)  # B25
+    d['kaspiyot']        = float(r(25, 4) or 0)  # D25
+    d['portfolio_chg']   = float(r(26, 2) or 0)  # B26
+    d['cumulative_gain'] = float(r(27, 2) or 0)  # B27
+    d['return_pct']      = float(r(27, 4) or 0)  # D27
+    d['monthly_return']  = float(r(29, 4) or 0)  # D29
+    d['target_dist']     = float(r(31, 2) or 0)  # B31
+    d['invest_surplus']  = float(r(29, 10) or 0) # J29
+    d['bank_free']       = float(r(27, 10) or 0) # J27
+    d['bank']            = float(r(24, 11) or 0) # K24
+    d['exp_credit']      = abs(float(r(25, 11) or 0)) + abs(float(r(26, 11) or 0))  # K25+K26
+    d['net_worth']       = float(r(32, 11) or 0) # K32
+    d['pension_total']   = float(r(13, 11) or 0) # K13
+    d['hishtalmut_total']= float(r(14, 11) or 0) # K14
+    d['pension_dror']    = float(r(17, 11) or 0) # K17
+    d['pension_liat']    = float(r(18, 11) or 0) # K18
+    d['hishtalmut_dror'] = float(r(19, 11) or 0) # K19
+    d['hishtalmut_liat'] = float(r(20, 11) or 0) # K20
+    d['pension_monthly'] = float(r(21, 11) or 0) # K21
+    d['pension_dror_chg']= float(r(17, 12) or 0) # L17
+    d['hishtalmut_dror_f1'] = float(r(19, 11) or 0) * 0.47
+    d['hishtalmut_dror_f2'] = float(r(19, 11) or 0) * 0.53
 
-    d['bank']            = float(ws_d['D18'].value or 0)
-    d['pension_dror']    = float(ws_d['D10'].value or 0)
-    d['pension_liat']    = float(ws_d['D11'].value or 0)
-    d['hishtalmut_dror'] = float(ws_d['D12'].value or 0)
-    d['hishtalmut_liat'] = float(ws_d['D13'].value or 0)
     d['rsu_vested']      = float(rsu['H13'].value or 0)
     d['rsu_unvested']    = float(rsu['H14'].value or 0)
 
@@ -154,8 +160,6 @@ def read_workbook():
     wb.close()
 
     # Derived
-    d['pension_total']     = d['pension_dror'] + d['pension_liat']
-    d['hishtalmut_total']  = d['hishtalmut_dror'] + d['hishtalmut_liat']
     d['pension_all']       = d['pension_total'] + d['hishtalmut_total']
     d['rsu_total']         = d['rsu_vested'] + d['rsu_unvested']
     d['rate']              = 3.65
@@ -163,7 +167,7 @@ def read_workbook():
     d['rsu_vested_ils']    = d['rsu_vested'] * d['rate']
     d['liquid']            = d['portfolio_val'] + d['bank'] + d['rsu_ils']
     d['gross']             = d['liquid'] + d['pension_all']
-    d['net_worth']         = d['gross'] - d['mortgage']
+    # net_worth read directly from K32; gross computed for display
     d['kaspiyot_excess']   = max(0, d['kaspiyot'] - 350000)
     d['invest_pct']        = int(d['portfolio_val'] / 2000000 * 100)
     d['stocks_pct']        = 71
