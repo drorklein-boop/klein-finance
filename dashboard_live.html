@@ -358,21 +358,21 @@ input[type=range]{flex:1;accent-color:var(--gold);cursor:pointer}
   <div class="section-label" style="margin-top:0">פירוט הוצאות — אפריל 2026</div>
   <div class="exp-breakdown-row">
     <div class="exp-breakdown-name">כרטיסי אשראי (מקס + אישראכרט)</div>
-    <div class="exp-breakdown-bar-wrap"><div class="exp-breakdown-bar" style="width:89%"></div></div>
+    <div class="exp-breakdown-bar-wrap"><div class="exp-breakdown-bar" style="width:94.2%"></div></div>
     <div class="exp-breakdown-val">₪6,191</div>
-    <div class="exp-breakdown-pct">88.8%</div>
+    <div class="exp-breakdown-pct">94.2%</div>
   </div>
   <div class="exp-breakdown-row">
     <div class="exp-breakdown-name">משיכת מזומן</div>
-    <div class="exp-breakdown-bar-wrap"><div class="exp-breakdown-bar" style="width:7.6%"></div></div>
-    <div class="exp-breakdown-val">₪3,500</div>
-    <div class="exp-breakdown-pct">7.6%</div>
+    <div class="exp-breakdown-bar-wrap"><div class="exp-breakdown-bar" style="width:0.0%"></div></div>
+    <div class="exp-breakdown-val">₪0</div>
+    <div class="exp-breakdown-pct">0.0%</div>
   </div>
   <div class="exp-breakdown-row">
     <div class="exp-breakdown-name">משכנתא</div>
-    <div class="exp-breakdown-bar-wrap"><div class="exp-breakdown-bar" style="width:3.3%"></div></div>
-    <div class="exp-breakdown-val">₪1,523</div>
-    <div class="exp-breakdown-pct">3.3%</div>
+    <div class="exp-breakdown-bar-wrap"><div class="exp-breakdown-bar" style="width:5.4%"></div></div>
+    <div class="exp-breakdown-val">₪1,571</div>
+    <div class="exp-breakdown-pct">5.4%</div>
   </div>
   <div class="exp-breakdown-row">
     <div class="exp-breakdown-name">עמלות ואחר</div>
@@ -895,18 +895,11 @@ const SURPLUS_DATA = [38509,26787,30141,19519,40213,40847,8232,13364,28955,13325
 const INVEST_DATA = [32523,32735,10026,3339,14873,10763,30345,20747,21013,133244,29896,0];
 const CUMUL_DATA   = [32222,70817,99386,127569,147180,187337,228236,236349,249906,278681,396189];
 
-const CATS = [
-  {name:'מזון וצריכה',   vals:[3470,2022,2640]},
-  {name:'מסעדות וקפה',   vals:[3741,4002,2237]},
-  {name:'פנאי ובידור',   vals:[254,1867,2294]},
-  {name:'אופנה',         vals:[759,1934,1040]},
-  {name:'טיסות ותיירות', vals:[3,4658,990]},
-  {name:'עירייה',        vals:[108,1792,1412]},
-  {name:'חשמל ומחשבים', vals:[5183,83,0]},
-  {name:'תקשורת',        vals:[86,171,312]},
-  {name:'שונות',         vals:[871,1418,443]},
-];
-const CAT_MONTHS = ['ינואר','פברואר','מרץ'];
+const CATS = [{name:'שונות', vals:[25612,20145,18925]},
+  {name:'קניות אונליין', vals:[5707,0,0]},
+  {name:'פנאי ובידור', vals:[300,0,0]},
+  {name:'תקשורת', vals:[266,0,0]}];
+const CAT_MONTHS = ['פברואר','מרץ','אפריל'];
 
 const CURRENT = 184.69, RATE = 3.0386;
 const TRANCHES = [
