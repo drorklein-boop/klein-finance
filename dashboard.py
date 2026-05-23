@@ -92,6 +92,24 @@ def read_workbook():
     d['pension_monthly']   = float(v('סה"כ הפקדות חודשיות:', 10) or 0)
     d['hishtalmut_dror_f1']= float(v('השתלמות - דרור (אלטשולר)', 10) or d['hishtalmut_dror'] * 0.47)
     d['hishtalmut_dror_f2']= d['hishtalmut_dror'] - d['hishtalmut_dror_f1']
+    # Read actual Migdal Makefet fund split from מסלקה sheet
+    try:
+        ws_dror = wb['דרור - מסלקה']
+        dror_rows = list(ws_dror.iter_rows(values_only=True))
+        makefet_vals = [float(r[4]) for r in dror_rows
+                        if r[1] and 'מגדל מקפת' in str(r[1]) and r[4] and isinstance(r[4], (int,float)) and float(r[4]) > 1000]
+        if len(makefet_vals) >= 2:
+            d['pension_dror_f1'] = makefet_vals[0]
+            d['pension_dror_f2'] = makefet_vals[1]
+        elif len(makefet_vals) == 1:
+            d['pension_dror_f1'] = makefet_vals[0]
+            d['pension_dror_f2'] = d['pension_dror'] - makefet_vals[0]
+        else:
+            d['pension_dror_f1'] = d['pension_dror'] * 0.5
+            d['pension_dror_f2'] = d['pension_dror'] * 0.5
+    except:
+        d['pension_dror_f1'] = d['pension_dror'] * 0.5
+        d['pension_dror_f2'] = d['pension_dror'] * 0.5
 
     # Mortgage from balance sheet
     d['mortgage'] = 244691.90
@@ -189,7 +207,9 @@ def build_holdings_html(holdings):
         clr = 'c-green' if h['chg'] >= 0 else 'c-red'
         rows += (f'            <tr>\n'
                  f'              <td>{h["name"]}</td>\n'
-                 f'              <td>{ils(h["value"])}</td>\n'
+                 f'              <td style="font-family:var(--mono)">{ils(h["value"])}</td>\n'
+                 f'              <td style="font-family:var(--mono);color:var(--muted)">{pct(h["pct"])}%</td>\n'
+                 f'              <td style="font-family:var(--mono);color:var(--{clr.replace("c-","")})">{arrow} {abs(h["chg"]*100):.1f}%</td>\n'
                  f'            </tr>\n')
     return rows
 
@@ -255,8 +275,8 @@ def fill_template(template, d):
         '__PENSION_TOTAL_K__':    k(d['pension_total']),
         '__HISHTALMUT_TOTAL_K__': k(d['hishtalmut_total']),
         '__PENSION_CHG__':        ils_signed(d['pension_dror_chg']),
-        '__PENSION_DROR_F1__':    ils(d['pension_dror'] * 0.5),
-        '__PENSION_DROR_F2__':    ils(d['pension_dror'] * 0.5),
+        '__PENSION_DROR_F1__':    ils(d.get('pension_dror_f1', d['pension_dror'] * 0.5)),
+        '__PENSION_DROR_F2__':    ils(d.get('pension_dror_f2', d['pension_dror'] * 0.5)),
         '__PENSION_DROR__':       ils(d['pension_dror']),
         '__PENSION_LIAT__':       ils(d['pension_liat']),
         '__HISHTALMUT_DROR_F1__': ils(d['hishtalmut_dror_f1']),
