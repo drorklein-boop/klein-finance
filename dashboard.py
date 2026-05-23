@@ -75,8 +75,8 @@ def read_workbook():
     d['return_pct']      = float(r(27, 4) or 0)  # D27
     d['monthly_return']  = float(r(29, 4) or 0)  # D29
     d['target_dist']     = float(r(31, 2) or 0)  # B31
-    d['invest_surplus']  = float(r(29, 10) or 0) # J29
-    d['bank_free']       = float(r(27, 10) or 0) # J27
+    d['invest_surplus']  = float(r(29, 11) or 0) # K29
+    d['bank_free']       = float(r(27, 11) or 0) # K27
     d['bank']            = float(r(24, 11) or 0) # K24
     d['exp_credit']      = abs(float(r(25, 11) or 0)) + abs(float(r(26, 11) or 0))  # K25+K26
     d['net_worth']       = float(r(32, 11) or 0) # K32
