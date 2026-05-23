@@ -94,10 +94,10 @@ def read_workbook():
     d['rsu_vested']      = float(rsu['H13'].value or 0)
     d['rsu_unvested']    = float(rsu['H14'].value or 0)
 
-    d['pension_dror_chg']  = float(v('פנסיה - דרור (מגדל)', 11) or 0)
-    d['pension_monthly']   = float(v('סה"כ הפקדות חודשיות:', 10) or 0)
-    d['hishtalmut_dror_f1']= float(v('השתלמות - דרור (אלטשולר)', 10) or d['hishtalmut_dror'] * 0.47)
-    d['hishtalmut_dror_f2']= d['hishtalmut_dror'] - d['hishtalmut_dror_f1']
+    d['pension_dror_chg']  = float(r(17, 12) or 0)  # L17
+    d['pension_monthly']   = float(r(21, 11) or 0)  # K21
+    d['hishtalmut_dror_f1']= d['hishtalmut_dror'] * 0.47
+    d['hishtalmut_dror_f2']= d['hishtalmut_dror'] * 0.53
     # Read actual Migdal Makefet fund split from מסלקה sheet
     try:
         ws_dror = wb['דרור - מסלקה']
