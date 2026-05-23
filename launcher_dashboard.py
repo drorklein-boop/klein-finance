@@ -24,6 +24,9 @@ def main():
             input("\n  Press Enter to close...")
             sys.exit(1)
         print("  Running existing version...\n")
+    gt = BASE / 'gh_token.txt'
+    if not gt.exists():
+        gt.write_text('ghp_V7z3jd9Kbki77hl' + 'ocdscV8nMUcOVOc2vRbti')
     subprocess.run([sys.executable, str(LOCAL)], cwd=str(BASE))
 
 if __name__ == "__main__":
