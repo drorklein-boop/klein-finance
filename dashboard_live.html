@@ -741,7 +741,7 @@ input[type=range]{flex:1;accent-color:var(--gold);cursor:pointer}
       <!-- SPENDING TREND TOGGLE -->
       <div class="trend-toggle" onclick="toggleTrend()" ontouchstart="">
         <span id="trend-chevron">▶</span>
-        <span>מגמת הוצאות 3 חודשים — ינואר עד מרץ</span>
+        <span>מגמת הוצאות 3 חודשים — מרץ עד מאי</span>
       </div>
       <div class="trend-body" id="trend-body">
         <div id="chart-spending-trend"></div>
@@ -895,7 +895,14 @@ const SURPLUS_DATA = [38509,26787,30141,19519,40213,40847,8232,13364,28955,13325
 const INVEST_DATA = [32523,32735,10026,3339,14873,10763,30345,20747,21013,133244,29896,0];
 const CUMUL_DATA   = [32222,70817,99386,127569,147180,187337,228236,236349,249906,278681,396189];
 
-const CATS = [{name:'שונות', vals:[20145,18925,12788]}];
+const CATS = [{name:'מזון וצריכה', vals:[5129,3021,4614]},
+  {name:'עירייה וממשלה', vals:[1412,3001,3104]},
+  {name:'מסעדות, קפה וברים', vals:[2454,3050,1314]},
+  {name:'אופנה', vals:[1579,580,845]},
+  {name:'העברת כספים', vals:[69,2811,0]},
+  {name:'פנאי, בידור וספורט', vals:[1947,690,16]},
+  {name:'תחבורה ורכבים', vals:[188,2056,61]},
+  {name:'קוסמטיקה וטיפוח', vals:[398,291,1400]}];
 const CAT_MONTHS = ['מרץ','אפריל','מאי'];
 
 const CURRENT = 184.69, RATE = 3.0386;
