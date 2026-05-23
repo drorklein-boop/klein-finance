@@ -367,7 +367,7 @@ def upload_to_fileio(html_path):
             'https://api.github.com/gists',
             data=payload,
             headers={'Content-Type': 'application/json', 'User-Agent': 'KleinFinance',
-                     'Authorization': 'token ' + open(BASE / 'api_key.txt').read().strip()},
+                     'Authorization': 'token ' + open(BASE / 'gh_token.txt').read().strip()},
             method='POST')
         with urllib.request.urlopen(req, timeout=15) as r:
             result = json.loads(r.read())
