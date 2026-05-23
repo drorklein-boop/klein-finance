@@ -228,11 +228,11 @@ def read_workbook():
 
         import datetime as dt
         now = dt.date.today()
-        # Get last 3 months
+        # Get current month + 2 previous months
         months_back = []
-        for i in range(3, 0, -1):
+        for i in range(2, -1, -1):
             m = (now.month - i - 1) % 12 + 1
-            y = now.year if now.month - i > 0 else now.year - 1
+            y = now.year if (now.month - i) > 0 else now.year - 1
             months_back.append((y, m))
 
         month_names_he = {
@@ -248,8 +248,9 @@ def read_workbook():
             try:
                 ws_tx = wb[sheet_name]
                 rows_tx = list(ws_tx.iter_rows(values_only=True))
-                # Find header row
-                hdr_idx = next((i for i,r in enumerate(rows_tx) if r[0] and 'תאריך' in str(r[0])), 0)
+                # Find header row — scan all rows for תאריך
+                hdr_idx = next((i for i,r in enumerate(rows_tx)
+                               if any(h and 'תאריך' in str(h) for h in r)), 0)
                 hdr = rows_tx[hdr_idx]
                 date_col = next((i for i,h in enumerate(hdr) if h and 'תאריך' in str(h)), 0)
                 amt_col  = next((i for i,h in enumerate(hdr) if h and 'חיוב' in str(h) and 'סכום' in str(h)), 4)
