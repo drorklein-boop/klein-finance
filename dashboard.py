@@ -179,6 +179,120 @@ def read_workbook():
         print(f'  Chart data read failed: {e}')
         d['chart_months'] = []
         d['chart_income'] = d['chart_expenses'] = d['chart_invest'] = d['chart_surplus'] = []
+
+    # Expense breakdown — from ניתוח תזרים rows 66-70, current month col
+    try:
+        # Find current month column — same logic as chart (col with income > 0)
+        cur_col = data_cols[-1] if data_cols else None
+        if cur_col:
+            exp_credit   = abs(tz(66, cur_col))
+            exp_cash     = abs(tz(68, cur_col))
+            exp_mortgage = abs(tz(67, cur_col))
+            exp_other    = abs(tz(70, cur_col))
+            exp_total    = exp_credit + exp_cash + exp_mortgage + exp_other or 1
+            def pct_str(v): return f'{v/exp_total*100:.1f}'
+            d['exp_credit_pct']   = pct_str(exp_credit)
+            d['exp_cash']         = f'₪{exp_cash:,.0f}'
+            d['exp_cash_pct']     = pct_str(exp_cash)
+            d['exp_mortgage']     = f'₪{exp_mortgage:,.0f}'
+            d['exp_mortgage_pct'] = pct_str(exp_mortgage)
+        else:
+            d['exp_credit_pct'] = d['exp_cash_pct'] = d['exp_mortgage_pct'] = '0'
+            d['exp_cash'] = d['exp_mortgage'] = '₪0'
+    except Exception as e:
+        print(f'  Expense breakdown failed: {e}')
+        d['exp_credit_pct'] = d['exp_cash_pct'] = d['exp_mortgage_pct'] = '0'
+        d['exp_cash'] = d['exp_mortgage'] = '₪0'
+
+    # Category computation — keyword-based from transaction sheets
+    try:
+        CATEGORY_MAP = {
+            'מזון': 'מזון וצריכה', 'סופר': 'מזון וצריכה', 'רמי': 'מזון וצריכה',
+            'שופרסל': 'מזון וצריכה', 'קופיקס': 'מזון וצריכה', 'AM:PM': 'מזון וצריכה',
+            'מסעדה': 'מסעדות וקפה', 'קפה': 'מסעדות וקפה', 'בורגר': 'מסעדות וקפה',
+            'פיצה': 'מסעדות וקפה', 'סושי': 'מסעדות וקפה', 'שווארמה': 'מסעדות וקפה',
+            'CAFE': 'מסעדות וקפה', 'RESTO': 'מסעדות וקפה',
+            'בידור': 'פנאי ובידור', 'קולנוע': 'פנאי ובידור', 'ספורט': 'פנאי ובידור',
+            'HOT': 'פנאי ובידור', 'NETFLIX': 'פנאי ובידור', 'SPOTIFY': 'פנאי ובידור',
+            'APPLE': 'פנאי ובידור', 'GOOGLE': 'פנאי ובידור',
+            'ZARA': 'אופנה', 'H&M': 'אופנה', 'SHEIN': 'אופנה', 'CASTRO': 'אופנה',
+            'GOLF': 'אופנה', 'FOX': 'אופנה',
+            'טיסה': 'טיסות ותיירות', 'מלון': 'טיסות ותיירות', 'AIRBNB': 'טיסות ותיירות',
+            'EL AL': 'טיסות ותיירות', 'ELAL': 'טיסות ותיירות', 'BOOKING': 'טיסות ותיירות',
+            'עירייה': 'עירייה ומיסים', 'ארנונה': 'עירייה ומיסים',
+            'חשמל': 'חשמל ומחשבים', 'אלקטרה': 'חשמל ומחשבים',
+            'בזק': 'תקשורת', 'HOT MOBILE': 'תקשורת', 'PARTNER': 'תקשורת',
+            'CELLCOM': 'תקשורת', 'YES': 'תקשורת',
+            'PAYPAL': 'קניות אונליין', 'AMAZON': 'קניות אונליין', 'ALIEXPRESS': 'קניות אונליין',
+        }
+
+        import datetime as dt
+        now = dt.date.today()
+        # Get last 3 months
+        months_back = []
+        for i in range(3, 0, -1):
+            m = (now.month - i - 1) % 12 + 1
+            y = now.year if now.month - i > 0 else now.year - 1
+            months_back.append((y, m))
+
+        month_names_he = {
+            1:'ינואר', 2:'פברואר', 3:'מרץ', 4:'אפריל', 5:'מאי', 6:'יוני',
+            7:'יולי', 8:'אוגוסט', 9:'ספטמבר', 10:'אוקטובר', 11:'נובמבר', 12:'דצמבר'
+        }
+
+        # Collect transactions from openpyxl sheets (data cells)
+        cat_totals = {}  # {cat: [m1_total, m2_total, m3_total]}
+        all_cats = list(dict.fromkeys(CATEGORY_MAP.values())) + ['שונות']
+
+        for sheet_name in ['עסקאות במועד החיוב', 'אישראכרט']:
+            try:
+                ws_tx = wb[sheet_name]
+                rows_tx = list(ws_tx.iter_rows(values_only=True))
+                # Find header row
+                hdr_idx = next((i for i,r in enumerate(rows_tx) if r[0] and 'תאריך' in str(r[0])), 0)
+                hdr = rows_tx[hdr_idx]
+                date_col = next((i for i,h in enumerate(hdr) if h and 'תאריך' in str(h)), 0)
+                amt_col  = next((i for i,h in enumerate(hdr) if h and 'חיוב' in str(h) and 'סכום' in str(h)), 4)
+                name_col = next((i for i,h in enumerate(hdr) if h and ('עסק' in str(h) or 'שם' in str(h))), 1)
+                for row in rows_tx[hdr_idx+1:]:
+                    try:
+                        date_val = row[date_col]
+                        if not date_val: continue
+                        if hasattr(date_val, 'year'):
+                            row_y, row_m = date_val.year, date_val.month
+                        else:
+                            continue
+                        month_idx = next((i for i,(y,m) in enumerate(months_back) if y==row_y and m==row_m), None)
+                        if month_idx is None: continue
+                        merchant = str(row[name_col] or '').upper()
+                        amount = abs(float(row[amt_col] or 0))
+                        cat = 'שונות'
+                        for kw, c in CATEGORY_MAP.items():
+                            if kw.upper() in merchant:
+                                cat = c; break
+                        if cat not in cat_totals: cat_totals[cat] = [0, 0, 0]
+                        cat_totals[cat][month_idx] += amount
+                    except: continue
+            except: continue
+
+        # Build CATS JSON and CAT_MONTHS
+        cats_with_data = [(cat, totals) for cat, totals in cat_totals.items() if sum(totals) > 0]
+        cats_with_data.sort(key=lambda x: -sum(x[1]))
+
+        cats_json = ',\n  '.join(
+            f'{{name:\'{cat}\', vals:[{int(v[0])},{int(v[1])},{int(v[2])}]}}'
+            for cat, v in cats_with_data[:8]
+        )
+        cat_months = ','.join(f"'{month_names_he[m]}'" for y,m in months_back)
+
+        d['cats_json']   = cats_json
+        d['cat_months']  = cat_months
+        print(f'  Categories computed: {len(cats_with_data)} cats, months: {[month_names_he[m] for y,m in months_back]}')
+    except Exception as e:
+        print(f'  Category computation failed: {e}')
+        d['cats_json']  = ''
+        d['cat_months'] = "'ינואר','פברואר','מרץ'"
+
     # Holdings
     d['holdings'] = []
     try:
@@ -342,6 +456,13 @@ def fill_template(template, d):
         '__CHART_INVEST__':        ','.join(str(v) for v in d.get('chart_invest', [])),
         '__CHART_SURPLUS__':       ','.join(str(v) for v in d.get('chart_surplus', [])),
         '__CHART_ALIGN__':         ','.join(str(v) for v in d.get('chart_align', [])),
+        '__EXP_CREDIT_PCT__':      d.get('exp_credit_pct', '0'),
+        '__EXP_CASH__':            d.get('exp_cash', '₪0'),
+        '__EXP_CASH_PCT__':        d.get('exp_cash_pct', '0'),
+        '__EXP_MORTGAGE__':        d.get('exp_mortgage', '₪0'),
+        '__EXP_MORTGAGE_PCT__':    d.get('exp_mortgage_pct', '0'),
+        '__CATS_JSON__':           d.get('cats_json', ''),
+        '__CAT_MONTHS__':          d.get('cat_months', "'ינואר','פברואר','מרץ'"),
         '__CHART_INSIGHTECH__':    ','.join(str(v) for v in d.get('chart_insightech', [])),
         '__TOP3_ROWS__':          top3_html,
         '__HOLDINGS_ROWS__':      holdings_html,
