@@ -73,7 +73,6 @@ def read_workbook():
     d['period']          = r(3, 4) or datetime.date.today().strftime('%B %Y')
     d['report_date']     = str(r(3, 2) or datetime.date.today().strftime('%d.%m.%Y'))
     d['income']          = float(r(6, 2) or 0)   # B6
-    print(f'  DEBUG B6 income: {r(6,2)}')
     d['expenses']        = float(r(7, 2) or 0)   # B7
     d['surplus']         = float(r(8, 2) or 0)   # B8
     d['savings_rate']    = float(r(9, 2) or 0)   # B9
@@ -320,6 +319,10 @@ def fill_template(template, d):
 
 
 def upload_to_fileio(html_path):
+    import ssl
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
     with open(html_path, 'rb') as f:
         content = f.read()
     boundary = b'----KleinFinanceBoundary'
@@ -331,7 +334,7 @@ def upload_to_fileio(html_path):
         headers={'Content-Type': f'multipart/form-data; boundary={boundary.decode()}'},
         method='POST')
     try:
-        with urllib.request.urlopen(req, timeout=15) as r:
+        with urllib.request.urlopen(req, timeout=15, context=ctx) as r:
             result = json.loads(r.read())
             if result.get('success'):
                 return result.get('link', '')
