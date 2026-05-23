@@ -229,11 +229,8 @@ def read_workbook():
             try:
                 date_val = row[0]
                 if not date_val: continue
-                if hasattr(date_val, 'year'):
+                if hasattr(date_val, 'year') and date_val.year > 2000:
                     ry, rm = date_val.year, date_val.month
-                elif isinstance(date_val, str) and '-' in str(date_val):
-                    parts = str(date_val).split('-')
-                    ry, rm = int(parts[0]), int(parts[1])
                 else:
                     continue
                 month_idx = next((i for i,(y,m) in enumerate(months_back) if y==ry and m==rm), None)
