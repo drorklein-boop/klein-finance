@@ -333,6 +333,7 @@ def fill_template(template, d):
         '__KASPIYOT_DEPLOY_NOTE__': deploy_note,
         '__RSU_PCT_FROM_TARGET__': rsu_pct_from_target,
         '__TOP5_ROWS__':          top5_html,
+        '__CHART_MONTHS__':        ','.join(f"'{m}'" for m in d.get('chart_months', [])),
         '__CHART_INCOME__':        ','.join(str(v) for v in d.get('chart_income', [])),
         '__CHART_EXPENSES__':      ','.join(str(v) for v in d.get('chart_expenses', [])),
         '__CHART_INVEST__':        ','.join(str(v) for v in d.get('chart_invest', [])),
