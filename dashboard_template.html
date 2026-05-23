@@ -36,7 +36,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Heebo',sans-serif;
 .strip-wrap{background:var(--bg2);border-bottom:1px solid var(--border)}
 .strip{display:grid;grid-template-columns:repeat(3,1fr)}
 @media(min-width:700px){.strip{grid-template-columns:repeat(6,1fr)}}
-.strip-cell{padding:12px 13px;border-left:1px solid var(--border);border-bottom:1px solid var(--border)}
+.strip-cell{padding:12px 13px;border-left:1px solid var(--border);border-bottom:1px solid var(--border);touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .strip-cell:nth-child(3n+1){border-left:none}
 @media(min-width:700px){
   .strip-cell:nth-child(3n+1){border-left:1px solid var(--border)}
@@ -64,7 +64,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Heebo',sans-serif;
 /* PORTFOLIO EXPANDABLE CARDS */
 .portfolio-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 @media(min-width:700px){.portfolio-grid{grid-template-columns:repeat(4,1fr)}}
-.pcard{background:var(--bg2);border:1px solid var(--border);border-radius:9px;overflow:hidden;transition:border-color 0.2s}
+.pcard{background:var(--bg2);border:1px solid var(--border);border-radius:9px;overflow:hidden;transition:border-color 0.2s;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .pcard.expandable{cursor:pointer}
 .pcard.expandable:hover{border-color:#2a3150}
 .pcard.open{border-color:#2a3458;box-shadow:0 4px 18px rgba(0,0,0,0.3);grid-column:1/-1}
@@ -283,13 +283,13 @@ input[type=range]{flex:1;accent-color:var(--gold);cursor:pointer}
 <!-- STRIP -->
 <div class="strip-wrap">
 <div class="strip">
-  <div class="strip-cell clickable" id="sc-income" onclick="toggleStripPanel('income')">
+  <div class="strip-cell clickable" id="sc-income" onclick="toggleStripPanel('income')" ontouchstart="">
     <div class="sc-label">הכנסות</div>
     <div class="sc-value c-gold">__INCOME__</div>
     <div class="sc-sub">כולל בונוס</div>
     <div class="sc-hint">← לפירוט</div>
   </div>
-  <div class="strip-cell clickable" id="sc-expenses" onclick="toggleStripPanel('expenses')">
+  <div class="strip-cell clickable" id="sc-expenses" onclick="toggleStripPanel('expenses')" ontouchstart="">
     <div class="sc-label">הוצאות</div>
     <div class="sc-value">__EXPENSES__</div>
     <div class="sc-sub">כרטיסי אשראי</div>
@@ -390,7 +390,7 @@ input[type=range]{flex:1;accent-color:var(--gold);cursor:pointer}
   <div class="portfolio-grid" id="portfolio-grid">
 
     <!-- ריכוז יתרות — FIRST (rightmost in RTL) -->
-    <div class="pcard expandable" id="pc-leumi" onclick="togglePC('leumi')">
+    <div class="pcard expandable" id="pc-leumi" onclick="togglePC('leumi')" ontouchstart="">
       <div class="pcard-head">
         <div class="pcard-label">ריכוז יתרות לאומי <span class="pcard-chevron">▼</span></div>
         <div class="pcard-value">__BANK__</div>
@@ -421,7 +421,7 @@ input[type=range]{flex:1;accent-color:var(--gold);cursor:pointer}
     </div>
 
     <!-- TRADING ACCOUNT — SECOND -->
-    <div class="pcard expandable" id="pc-trading" onclick="togglePC('trading')">
+    <div class="pcard expandable" id="pc-trading" onclick="togglePC('trading')" ontouchstart="">
       <div class="pcard-head">
         <div class="pcard-label">חשבון מסחר — לאומי <span class="pcard-chevron">▼</span></div>
         <div class="pcard-value c-gold">__PORTFOLIO__</div>
@@ -464,7 +464,7 @@ input[type=range]{flex:1;accent-color:var(--gold);cursor:pointer}
     </div>
 
     <!-- RSU — THIRD -->
-    <div class="pcard expandable" id="pc-rsu" onclick="togglePC('rsu')">
+    <div class="pcard expandable" id="pc-rsu" onclick="togglePC('rsu')" ontouchstart="">
       <div class="pcard-head">
         <div class="pcard-label">RSU — Align Technology <span class="pcard-chevron">▼</span></div>
         <div class="pcard-value">__RSU_USD__</div>
@@ -547,7 +547,7 @@ input[type=range]{flex:1;accent-color:var(--gold);cursor:pointer}
     </div>
 
     <!-- PENSION — FOURTH (leftmost in RTL) -->
-    <div class="pcard expandable" id="pc-pension" onclick="togglePC('pension')">
+    <div class="pcard expandable" id="pc-pension" onclick="togglePC('pension')" ontouchstart="">
       <div class="pcard-head">
         <div class="pcard-label">פנסיה + השתלמות <span class="pcard-chevron">▼</span></div>
         <div class="pcard-value c-blue">__PENSION_ALL__</div>
@@ -668,7 +668,7 @@ __TOP3_ROWS__
       <div class="cat-changes-row">שינוי ממרץ: מזון <span class="c-red">▼30.6%</span> | פנאי <span class="c-green">▲22.9%</span> | מסעדות <span class="c-green">▲44.1%</span></div>
 
       <!-- SPENDING TREND TOGGLE -->
-      <div class="trend-toggle" onclick="toggleTrend()">
+      <div class="trend-toggle" onclick="toggleTrend()" ontouchstart="">
         <span id="trend-chevron">▶</span>
         <span>מגמת הוצאות 3 חודשים — ינואר עד מרץ</span>
       </div>
@@ -682,7 +682,7 @@ __TOP3_ROWS__
   <div class="section-label">החלטות פעולה</div>
 
   <div class="decision-row" id="row-invest">
-    <div class="d-header" onclick="toggle('row-invest')">
+    <div class="d-header" onclick="toggle('row-invest')" ontouchstart="">
       <div class="tdot green"></div>
       <div class="d-title">השקעה חודשית — ACWI</div>
       <span class="badge act">השקע ב-15 לחודש</span>
@@ -691,8 +691,8 @@ __TOP3_ROWS__
     </div>
     <div class="d-body">
       <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('invest','details',this)">פירוט</button>
-        <button class="tab-btn" onclick="switchTab('invest','macro',this)">ניתוח שוק גלובלי</button>
+        <button class="tab-btn active" onclick="switchTab('invest','details',this)" ontouchstart="">פירוט</button>
+        <button class="tab-btn" onclick="switchTab('invest','macro',this)" ontouchstart="">ניתוח שוק גלובלי</button>
       </div>
       <div class="tab-pane active" id="invest-details">
         <div class="detail-grid">
@@ -738,7 +738,7 @@ __TOP3_ROWS__
   <div class="row-connector">קשר ישיר — עודף בקרן הביטחון מגדיל פוטנציאל ההשקעה ב-ACWI</div>
 
   <div class="decision-row" id="row-mm">
-    <div class="d-header" onclick="toggle('row-mm')">
+    <div class="d-header" onclick="toggle('row-mm')" ontouchstart="">
       <div class="tdot yellow"></div>
       <div class="d-title">קרן ביטחון — פריסה לשוק המניות</div>
       <span class="badge watch">עקוב אחר השוק</span>
@@ -760,7 +760,7 @@ __TOP3_ROWS__
   </div>
 
   <div class="decision-row" id="row-rsu">
-    <div class="d-header" onclick="toggle('row-rsu')">
+    <div class="d-header" onclick="toggle('row-rsu')" ontouchstart="">
       <div class="tdot red" id="rsu-dot"></div>
       <div class="d-title">RSU — Align Technology (ALGN)</div>
       <span class="badge wait" id="rsu-badge">המתן</span>
@@ -769,8 +769,8 @@ __TOP3_ROWS__
     </div>
     <div class="d-body">
       <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('rsu','details',this)">פירוט פעימות</button>
-        <button class="tab-btn" onclick="switchTab('rsu','macro',this)">ניתוח ALGN</button>
+        <button class="tab-btn active" onclick="switchTab('rsu','details',this)" ontouchstart="">פירוט פעימות</button>
+        <button class="tab-btn" onclick="switchTab('rsu','macro',this)" ontouchstart="">ניתוח ALGN</button>
       </div>
       <div class="tab-pane active" id="rsu-details">
         <div class="slider-row">
