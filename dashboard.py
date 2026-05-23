@@ -349,29 +349,26 @@ def fill_template(template, d):
 
 
 def upload_to_fileio(html_path):
-    import ssl
-    ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
-    with open(html_path, 'rb') as f:
+    # Upload via GitHub Gist (anonymous, no auth needed, no SSL issues)
+    with open(html_path, 'r', encoding='utf-8') as f:
         content = f.read()
-    boundary = b'----KleinFinanceBoundary'
-    body = (b'--' + boundary + b'\r\n' +
-            b'Content-Disposition: form-data; name="file"; filename="dashboard.html"\r\n' +
-            b'Content-Type: text/html\r\n\r\n' +
-            content + b'\r\n--' + boundary + b'--\r\n')
-    req = urllib.request.Request('https://file.io/?expires=14d', data=body,
-        headers={'Content-Type': f'multipart/form-data; boundary={boundary.decode()}'},
-        method='POST')
+    payload = json.dumps({
+        'description': 'Klein Finance Dashboard',
+        'public': False,
+        'files': {'dashboard.html': {'content': content}}
+    }).encode('utf-8')
     try:
-        with urllib.request.urlopen(req, timeout=15, context=ctx) as r:
+        req = urllib.request.Request(
+            'https://api.github.com/gists',
+            data=payload,
+            headers={'Content-Type': 'application/json', 'User-Agent': 'KleinFinance'},
+            method='POST')
+        with urllib.request.urlopen(req, timeout=15) as r:
             result = json.loads(r.read())
-            if result.get('success'):
-                return result.get('link', '')
+            return result.get('files', {}).get('dashboard.html', {}).get('raw_url', '') or result.get('html_url', '')
     except Exception as e:
         print(f'  Upload failed: {e}')
     return None
-
 
 def main():
     print('\n  Klein Finance - Dashboard Generator v3.0')
