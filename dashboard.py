@@ -196,7 +196,12 @@ def read_workbook():
     # Derived
     d['pension_all']       = d['pension_total'] + d['hishtalmut_total']
     d['rsu_total']         = d['rsu_vested'] + d['rsu_unvested']
-    d['rate']              = 3.65
+    try:
+        ws_hist = xw_wb.sheets['היסטוריה']
+        rate_val = ws_hist.range((25, 14)).value
+        d['rate'] = float(rate_val) if rate_val and isinstance(rate_val, (int,float)) else 3.65
+    except:
+        d['rate'] = 3.65
     d['rsu_ils']           = d['rsu_total'] * d['rate']
     d['rsu_vested_ils']    = d['rsu_vested'] * d['rate']
     d['liquid']            = d['portfolio_val'] + d['bank'] + d['rsu_ils']
@@ -361,7 +366,8 @@ def upload_to_fileio(html_path):
         req = urllib.request.Request(
             'https://api.github.com/gists',
             data=payload,
-            headers={'Content-Type': 'application/json', 'User-Agent': 'KleinFinance'},
+            headers={'Content-Type': 'application/json', 'User-Agent': 'KleinFinance',
+                     'Authorization': 'token ' + open(BASE / 'api_key.txt').read().strip()},
             method='POST')
         with urllib.request.urlopen(req, timeout=15) as r:
             result = json.loads(r.read())
@@ -394,9 +400,12 @@ def main():
     print('  Uploading for sharing...')
     link = upload_to_fileio(out)
     if link:
-        print(f'\n  Shareable link (14 days):\n  {link}')
+        print('\n  =====================================')
+        print('  SHAREABLE LINK:')
+        print(f'  {link}')
+        print('  =====================================')
     else:
-        print('  Upload failed — dashboard available locally.')
+        print('  Upload failed — dashboard available locally only.')
 
     input('\n  Press Enter to close...')
 
