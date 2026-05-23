@@ -354,24 +354,29 @@ def fill_template(template, d):
 
 
 def upload_to_fileio(html_path):
-    # Upload via GitHub Gist (anonymous, no auth needed, no SSL issues)
+    import base64 as b64
     with open(html_path, 'r', encoding='utf-8') as f:
         content = f.read()
-    payload = json.dumps({
-        'description': 'Klein Finance Dashboard',
-        'public': False,
-        'files': {'dashboard.html': {'content': content}}
-    }).encode('utf-8')
+    gh_token = open(BASE / 'gh_token.txt').read().strip()
+    # Push dashboard.html to GitHub repo, serve via htmlpreview.github.io
+    api_url = 'https://api.github.com/repos/drorklein-boop/klein-finance/contents/dashboard_live.html'
+    # Get current SHA if file exists
+    file_sha = None
     try:
-        req = urllib.request.Request(
-            'https://api.github.com/gists',
-            data=payload,
-            headers={'Content-Type': 'application/json', 'User-Agent': 'KleinFinance',
-                     'Authorization': 'token ' + open(BASE / 'gh_token.txt').read().strip()},
-            method='POST')
-        with urllib.request.urlopen(req, timeout=15) as r:
-            result = json.loads(r.read())
-            return result.get('files', {}).get('dashboard.html', {}).get('raw_url', '') or result.get('html_url', '')
+        r = urllib.request.urlopen(urllib.request.Request(api_url,
+            headers={'Authorization': 'token ' + gh_token, 'User-Agent': 'KleinFinance'}))
+        file_sha = json.loads(r.read()).get('sha')
+    except: pass
+    encoded = b64.b64encode(content.encode('utf-8')).decode('ascii')
+    payload = json.dumps({'message': 'update dashboard', 'content': encoded,
+                          **({'sha': file_sha} if file_sha else {})}).encode('utf-8')
+    try:
+        req = urllib.request.Request(api_url, data=payload, method='PUT',
+            headers={'Authorization': 'token ' + gh_token,
+                     'Content-Type': 'application/json', 'User-Agent': 'KleinFinance'})
+        with urllib.request.urlopen(req, timeout=30) as r:
+            json.loads(r.read())
+        return 'https://htmlpreview.github.io/?https://raw.githubusercontent.com/drorklein-boop/klein-finance/main/dashboard_live.html'
     except Exception as e:
         print(f'  Upload failed: {e}')
     return None
