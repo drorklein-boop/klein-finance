@@ -204,99 +204,64 @@ def read_workbook():
         d['exp_credit_pct'] = d['exp_cash_pct'] = d['exp_mortgage_pct'] = '0'
         d['exp_cash'] = d['exp_mortgage'] = '₪0'
 
-    # Category computation — keyword-based from transaction sheets
+    # Category computation — read קטגוריה column directly from CAL sheet
     try:
-        CATEGORY_MAP = {
-            'מזון': 'מזון וצריכה', 'סופר': 'מזון וצריכה', 'רמי': 'מזון וצריכה',
-            'שופרסל': 'מזון וצריכה', 'קופיקס': 'מזון וצריכה', 'AM:PM': 'מזון וצריכה',
-            'מסעדה': 'מסעדות וקפה', 'קפה': 'מסעדות וקפה', 'בורגר': 'מסעדות וקפה',
-            'פיצה': 'מסעדות וקפה', 'סושי': 'מסעדות וקפה', 'שווארמה': 'מסעדות וקפה',
-            'CAFE': 'מסעדות וקפה', 'RESTO': 'מסעדות וקפה',
-            'בידור': 'פנאי ובידור', 'קולנוע': 'פנאי ובידור', 'ספורט': 'פנאי ובידור',
-            'HOT': 'פנאי ובידור', 'NETFLIX': 'פנאי ובידור', 'SPOTIFY': 'פנאי ובידור',
-            'APPLE': 'פנאי ובידור', 'GOOGLE': 'פנאי ובידור',
-            'ZARA': 'אופנה', 'H&M': 'אופנה', 'SHEIN': 'אופנה', 'CASTRO': 'אופנה',
-            'GOLF': 'אופנה', 'FOX': 'אופנה',
-            'טיסה': 'טיסות ותיירות', 'מלון': 'טיסות ותיירות', 'AIRBNB': 'טיסות ותיירות',
-            'EL AL': 'טיסות ותיירות', 'ELAL': 'טיסות ותיירות', 'BOOKING': 'טיסות ותיירות',
-            'עירייה': 'עירייה ומיסים', 'ארנונה': 'עירייה ומיסים',
-            'חשמל': 'חשמל ומחשבים', 'אלקטרה': 'חשמל ומחשבים',
-            'בזק': 'תקשורת', 'HOT MOBILE': 'תקשורת', 'PARTNER': 'תקשורת',
-            'CELLCOM': 'תקשורת', 'YES': 'תקשורת',
-            'PAYPAL': 'קניות אונליין', 'AMAZON': 'קניות אונליין', 'ALIEXPRESS': 'קניות אונליין',
-        }
-
         import datetime as dt
         now = dt.date.today()
-        # Get current month + 2 previous months
         months_back = []
         for i in range(2, -1, -1):
             m = (now.month - i - 1) % 12 + 1
             y = now.year if (now.month - i) > 0 else now.year - 1
             months_back.append((y, m))
 
-        month_names_he = {
-            1:'ינואר', 2:'פברואר', 3:'מרץ', 4:'אפריל', 5:'מאי', 6:'יוני',
-            7:'יולי', 8:'אוגוסט', 9:'ספטמבר', 10:'אוקטובר', 11:'נובמבר', 12:'דצמבר'
-        }
+        month_names_he = {1:'ינואר',2:'פברואר',3:'מרץ',4:'אפריל',5:'מאי',6:'יוני',
+                          7:'יולי',8:'אוגוסט',9:'ספטמבר',10:'אוקטובר',11:'נובמבר',12:'דצמבר'}
 
-        # Collect transactions from openpyxl sheets (data cells)
-        cat_totals = {}  # {cat: [m1_total, m2_total, m3_total]}
-        all_cats = list(dict.fromkeys(CATEGORY_MAP.values())) + ['שונות']
+        cat_totals = {}  # {cat: [m0, m1, m2]}
 
-        for sheet_name in ['עסקאות במועד החיוב', 'אישראכרט']:
+        ws_cal = wb['עסקאות במועד החיוב']
+        rows_cal = list(ws_cal.iter_rows(values_only=True))
+        # Header is row 4 (index 3)
+        hdr_idx = next((i for i,r in enumerate(rows_cal)
+                        if r[0] and 'תאריך' in str(r[0]) and r[1] and 'שם' in str(r[1])), 3)
+        # col 0=date, 1=merchant, 2=category, 5=amount
+        for row in rows_cal[hdr_idx+1:]:
             try:
-                ws_tx = wb[sheet_name]
-                rows_tx = list(ws_tx.iter_rows(values_only=True))
-                # Find header row — scan all rows for תאריך
-                hdr_idx = next((i for i,r in enumerate(rows_tx)
-                               if any(h and 'תאריך' in str(h) for h in r)), 0)
-                hdr = rows_tx[hdr_idx]
-                date_col = next((i for i,h in enumerate(hdr) if h and 'תאריך' in str(h)), 0)
-                amt_col  = next((i for i,h in enumerate(hdr) if h and 'חיוב' in str(h) and 'סכום' in str(h)), 4)
-                name_col = next((i for i,h in enumerate(hdr) if h and ('עסק' in str(h) or 'שם' in str(h))), 1)
-                for row in rows_tx[hdr_idx+1:]:
-                    try:
-                        date_val = row[date_col]
-                        if not date_val: continue
-                        if hasattr(date_val, 'year'):
-                            row_y, row_m = date_val.year, date_val.month
-                        else:
-                            continue
-                        month_idx = next((i for i,(y,m) in enumerate(months_back) if y==row_y and m==row_m), None)
-                        if month_idx is None: continue
-                        merchant = str(row[name_col] or '').upper()
-                        amount = abs(float(row[amt_col] or 0))
-                        cat = 'שונות'
-                        for kw, c in CATEGORY_MAP.items():
-                            if kw.upper() in merchant:
-                                cat = c; break
-                        if cat not in cat_totals: cat_totals[cat] = [0, 0, 0]
-                        cat_totals[cat][month_idx] += amount
-                    except: continue
+                date_val = row[0]
+                if not date_val: continue
+                if hasattr(date_val, 'year'):
+                    ry, rm = date_val.year, date_val.month
+                elif isinstance(date_val, str) and '-' in str(date_val):
+                    parts = str(date_val).split('-')
+                    ry, rm = int(parts[0]), int(parts[1])
+                else:
+                    continue
+                month_idx = next((i for i,(y,m) in enumerate(months_back) if y==ry and m==rm), None)
+                if month_idx is None: continue
+                cat = str(row[2] or 'שונות').strip()
+                amount = abs(float(row[5] or 0))
+                if cat not in cat_totals: cat_totals[cat] = [0, 0, 0]
+                cat_totals[cat][month_idx] += amount
             except: continue
 
-        # Build CATS JSON and CAT_MONTHS
-        cats_with_data = [(cat, totals) for cat, totals in cat_totals.items() if sum(totals) > 0]
-        cats_with_data.sort(key=lambda x: -sum(x[1]))
-
+        cats_with_data = sorted(
+            [(cat, v) for cat, v in cat_totals.items() if sum(v) > 0],
+            key=lambda x: -sum(x[1])
+        )
         cats_json = ',\n  '.join(
-            f'{{name:\'{cat}\', vals:[{int(v[0])},{int(v[1])},{int(v[2])}]}}'
+            f"{{name:\'{cat}\', vals:[{int(v[0])},{int(v[1])},{int(v[2])}]}}"
             for cat, v in cats_with_data[:8]
         )
         cat_months = ','.join(f"'{month_names_he[m]}'" for y,m in months_back)
-
-        d['cats_json']   = cats_json
-        d['cat_months']  = cat_months
-        month_names_he2 = {1:'ינואר',2:'פברואר',3:'מרץ',4:'אפריל',5:'מאי',6:'יוני',
-                           7:'יולי',8:'אוגוסט',9:'ספטמבר',10:'אוקטובר',11:'נובמבר',12:'דצמבר'}
-        d['cat_range']   = f"{month_names_he2[months_back[0][1]]} עד {month_names_he2[months_back[2][1]]}"
-        print(f'  Categories computed: {len(cats_with_data)} cats, months: {[month_names_he[m] for y,m in months_back]}')
+        d['cats_json']  = cats_json
+        d['cat_months'] = cat_months
+        d['cat_range']  = f"{month_names_he[months_back[0][1]]} עד {month_names_he[months_back[2][1]]}"
+        print(f"  Categories: {len(cats_with_data)} cats, months: {[month_names_he[m] for y,m in months_back]}")
     except Exception as e:
         print(f'  Category computation failed: {e}')
         d['cats_json']  = ''
-        d['cat_months'] = "'ינואר','פברואר','מרץ'"
-
+        d['cat_months'] = "'מרץ','אפריל','מאי'"
+        d['cat_range']  = 'מרץ עד מאי' 
     # Holdings
     d['holdings'] = []
     try:
