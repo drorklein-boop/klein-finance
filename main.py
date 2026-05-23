@@ -1,4 +1,4 @@
-# Klein Finance - Monthly Sheet Updater v8.20
+# Klein Finance - Monthly Sheet Updater v8.21
 import sys, shutil, datetime, json, base64, re, warnings
 warnings.filterwarnings('ignore')
 from pathlib import Path
@@ -352,11 +352,37 @@ def write_rsu_tranche_table(wb):
 def write_sheet(xw_wb, name, data):
     ws = xw_wb.sheets[name]
     if name == 'אישראכרט':
+        import pandas as pd
+        sheet_cols = ['תאריך רכישה', 'שם בית עסק', 'סכום עסקה', 'מטבע עסקה',
+                      'סכום חיוב', 'מטבע חיוב', "מס' שובר", 'פירוט נוסף']
+        key_cols = ["מס' שובר", 'תאריך רכישה', 'סכום עסקה']
+        # Read existing sheet data to preserve history
+        existing_rows = ws.range('A1').expand().value
+        if existing_rows and len(existing_rows) > 1:
+            try:
+                existing_df = pd.DataFrame(existing_rows[1:], columns=existing_rows[0])
+                existing_df = existing_df[[c for c in sheet_cols if c in existing_df.columns]]
+            except:
+                existing_df = pd.DataFrame(columns=sheet_cols)
+        else:
+            existing_df = pd.DataFrame(columns=sheet_cols)
+        # Build new data dataframe
+        new_df = pd.DataFrame(data, columns=sheet_cols[:len(data[0])] if data else sheet_cols)
+        # Merge, deduplicate, sort
+        combined = pd.concat([existing_df, new_df], ignore_index=True)
+        valid_keys = [c for c in key_cols if c in combined.columns]
+        if valid_keys:
+            combined = combined.drop_duplicates(subset=valid_keys)
+        if 'תאריך רכישה' in combined.columns:
+            combined['תאריך רכישה'] = pd.to_datetime(combined['תאריך רכישה'], errors='coerce')
+            combined = combined.sort_values('תאריך רכישה', ascending=True)
+        out_rows = combined.values.tolist()
+        # Write back
         ws.range('A2:H10000').clear_contents()
-        if data:
+        if out_rows:
             xw_wb.app.screen_updating = False
             xw_wb.app.calculation = 'manual'
-            ws.range('A2').value = data
+            ws.range('A2').value = out_rows
             xw_wb.app.calculation = 'automatic'
             xw_wb.app.screen_updating = True
         if ws.range('A2').value is None:
@@ -373,7 +399,7 @@ def write_sheet(xw_wb, name, data):
             raise ValueError(f'Validation failed: {name} A1 empty after write')
 
 def main():
-    print("\n  Klein Finance - Monthly Update v8.20")
+    print("\n  Klein Finance - Monthly Update v8.21")
     print("  =====================================")
 
     if "--reset" in sys.argv:
