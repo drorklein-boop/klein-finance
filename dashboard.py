@@ -288,6 +288,9 @@ def read_workbook():
 
         d['cats_json']   = cats_json
         d['cat_months']  = cat_months
+        month_names_he2 = {1:'ינואר',2:'פברואר',3:'מרץ',4:'אפריל',5:'מאי',6:'יוני',
+                           7:'יולי',8:'אוגוסט',9:'ספטמבר',10:'אוקטובר',11:'נובמבר',12:'דצמבר'}
+        d['cat_range']   = f"{month_names_he2[months_back[0][1]]} עד {month_names_he2[months_back[2][1]]}"
         print(f'  Categories computed: {len(cats_with_data)} cats, months: {[month_names_he[m] for y,m in months_back]}')
     except Exception as e:
         print(f'  Category computation failed: {e}')
@@ -464,6 +467,7 @@ def fill_template(template, d):
         '__EXP_MORTGAGE_PCT__':    d.get('exp_mortgage_pct', '0'),
         '__CATS_JSON__':           d.get('cats_json', ''),
         '__CAT_MONTHS__':          d.get('cat_months', "'ינואר','פברואר','מרץ'"),
+        '__CAT_RANGE__':           d.get('cat_range', 'ינואר עד מרץ'),
         '__CHART_INSIGHTECH__':    ','.join(str(v) for v in d.get('chart_insightech', [])),
         '__TOP3_ROWS__':          top3_html,
         '__HOLDINGS_ROWS__':      holdings_html,
