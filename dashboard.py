@@ -167,13 +167,15 @@ def read_workbook():
             except: return 0
         # Row 46 = headers (col 2=מאי25 .. col 12=מרץ26, col13=אפריל26)
         # Row 47 = income, 48 = expenses, 49 = invest, 50 = surplus
-        # cols 2-12 = May25-Mar26 (history), col 13 = Apr26 (last completed)
-        # Use live xlwings values for current month as the final bar
-        d['chart_months']   = [str(tz_rows[45][c] or '') for c in range(1, 13)] + [str(d.get('period',''))]
-        d['chart_income']   = [tz(47, c) for c in range(2, 13)] + [int(d.get('income', 0))]
-        d['chart_expenses'] = [tz(48, c) for c in range(2, 13)] + [int(d.get('expenses', 0))]
-        d['chart_invest']   = [tz(49, c) for c in range(2, 13)] + [int(d.get('invest_surplus', 0))]
-        d['chart_surplus']  = [tz(52, c) for c in range(2, 13)] + [int(d.get('surplus', 0))]
+        # Find all columns with actual income data (non-zero, non-total)
+        income_row = tz_rows[46]  # row 47, 0-indexed
+        data_cols = [c for c in range(1, 20)
+                     if income_row[c] and isinstance(income_row[c], (int,float)) and income_row[c] > 0]
+        d['chart_months']   = [str(tz_rows[45][c] or '') for c in data_cols]
+        d['chart_income']   = [tz(47, c+1) for c in data_cols]
+        d['chart_expenses'] = [tz(48, c+1) for c in data_cols]
+        d['chart_invest']   = [tz(49, c+1) for c in data_cols]
+        d['chart_surplus']  = [tz(52, c+1) for c in data_cols]
     except Exception as e:
         print(f'  Chart data read failed: {e}')
         d['chart_months'] = []
