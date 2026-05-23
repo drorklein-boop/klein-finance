@@ -964,8 +964,8 @@ function renderTrendTable(){
 
 // ── RENDER ALL CHARTS ─────────────────────────────────────
 function renderCharts(){
-  const ALIGN  = [44130,51307,46339,41521,41803,41527,40085,40217,41527,49642,160378];
-  const INSIGH = [15856,15941,17723,15765,15856,15800,15852,15733,15925,15745,0];
+  const ALIGN = [__CHART_ALIGN__];
+  const INSIGH = [__CHART_INSIGHTECH__];
   const maxInc = Math.max(...INCOME_DATA)*1.08;
   const maxSur = Math.max(...SURPLUS_DATA)*1.12;
   const maxInv = Math.max(...INVEST_DATA)*1.12;
