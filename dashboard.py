@@ -169,8 +169,11 @@ def read_workbook():
         # Row 47 = income, 48 = expenses, 49 = invest, 50 = surplus
         # Find all columns with actual income data (non-zero, non-total)
         income_row = tz_rows[46]  # row 47, 0-indexed
+        header_row = tz_rows[45]  # row 46, 0-indexed
         data_cols = [c for c in range(1, 20)
-                     if income_row[c] and isinstance(income_row[c], (int,float)) and income_row[c] > 0]
+                     if income_row[c] and isinstance(income_row[c], (int,float))
+                     and income_row[c] > 0
+                     and header_row[c] and 'סה' not in str(header_row[c])]
         d['chart_months']   = [str(tz_rows[45][c] or '') for c in data_cols]
         d['chart_income']   = [tz(47, c+1) for c in data_cols]
         d['chart_expenses'] = [tz(48, c+1) for c in data_cols]
