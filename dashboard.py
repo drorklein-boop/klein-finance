@@ -1,4 +1,4 @@
-# Klein Finance - Dashboard Generator v3.0
+# Klein Finance - Dashboard Generator v3.0.1
 import sys, json, warnings, webbrowser, datetime, urllib.request
 warnings.filterwarnings('ignore')
 from pathlib import Path
