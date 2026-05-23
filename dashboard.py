@@ -156,34 +156,27 @@ def read_workbook():
             d['top3'].append({'name': str(name), 'amount': float(amt),
                               'pct': float(pct_ or 0), 'prev_pct': float(prev or 0)})
 
-    # Chart historical data from ניתוח תזרים rows 46-52
+    # Chart historical data — read via xlwings for live formula values
     try:
-        ws_tz = wb['ניתוח תזרים']
-        tz_rows = list(ws_tz.iter_rows(values_only=True))
-        def tz(row_1, col_1):  # 1-based
-            try:
-                v = tz_rows[row_1-1][col_1-1]
-                return int(float(v)) if isinstance(v, (int,float)) and v else 0
-            except: return 0
-        # Row 46 = headers (col 2=מאי25 .. col 12=מרץ26, col13=אפריל26)
-        # Row 47 = income, 48 = expenses, 49 = invest, 50 = surplus
-        # Find all columns with actual income data (non-zero, non-total)
-        income_row = tz_rows[46]  # row 47, 0-indexed
-        header_row = tz_rows[45]  # row 46, 0-indexed
-        data_cols = [c for c in range(1, 20)
-                     if income_row[c] and isinstance(income_row[c], (int,float))
-                     and income_row[c] > 0
-                     and header_row[c] and 'סה' not in str(header_row[c])]
-        d['chart_months']   = [str(tz_rows[45][c] or '') for c in data_cols]
-        d['chart_income']   = [tz(47, c+1) for c in data_cols]
-        d['chart_expenses'] = [tz(48, c+1) for c in data_cols]
-        d['chart_invest']   = [tz(49, c+1) for c in data_cols]
-        d['chart_surplus']  = [tz(52, c+1) for c in data_cols]
+        ws_tz = xw_wb.sheets['ניתוח תזרים']
+        def tz(row_1, col_1):
+            v = ws_tz.range((row_1, col_1)).value
+            return int(float(v)) if isinstance(v, (int,float)) and v else 0
+        def tz_str(row_1, col_1):
+            v = ws_tz.range((row_1, col_1)).value
+            return str(v) if v else ''
+        data_cols = [c for c in range(2, 20)
+                     if tz(47, c) > 0 and 'סה' not in tz_str(46, c) and tz_str(46, c)]
+        d['chart_months']   = [tz_str(46, c) for c in data_cols]
+        d['chart_income']   = [tz(47, c) for c in data_cols]
+        d['chart_expenses'] = [tz(48, c) for c in data_cols]
+        d['chart_invest']   = [tz(49, c) for c in data_cols]
+        d['chart_surplus']  = [tz(52, c) for c in data_cols]
+        print(f'  Chart: {len(data_cols)} months: {d["chart_months"]}')
     except Exception as e:
         print(f'  Chart data read failed: {e}')
         d['chart_months'] = []
         d['chart_income'] = d['chart_expenses'] = d['chart_invest'] = d['chart_surplus'] = []
-
     # Holdings
     d['holdings'] = []
     try:
