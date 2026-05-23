@@ -171,7 +171,9 @@ def read_workbook():
         d['chart_income']   = [tz(47, c) for c in data_cols]
         d['chart_expenses'] = [tz(48, c) for c in data_cols]
         d['chart_invest']   = [tz(49, c) for c in data_cols]
-        d['chart_surplus']  = [tz(52, c) for c in data_cols]
+        d['chart_surplus']     = [tz(52, c) for c in data_cols]
+        d['chart_align']       = [tz(56, c) for c in data_cols]
+        d['chart_insightech']  = [tz(57, c) for c in data_cols]
         print(f'  Chart: {len(data_cols)} months: {d["chart_months"]}')
     except Exception as e:
         print(f'  Chart data read failed: {e}')
@@ -334,6 +336,8 @@ def fill_template(template, d):
         '__CHART_EXPENSES__':      ','.join(str(v) for v in d.get('chart_expenses', [])),
         '__CHART_INVEST__':        ','.join(str(v) for v in d.get('chart_invest', [])),
         '__CHART_SURPLUS__':       ','.join(str(v) for v in d.get('chart_surplus', [])),
+        '__CHART_ALIGN__':         ','.join(str(v) for v in d.get('chart_align', [])),
+        '__CHART_INSIGHTECH__':    ','.join(str(v) for v in d.get('chart_insightech', [])),
         '__TOP3_ROWS__':          top3_html,
         '__HOLDINGS_ROWS__':      holdings_html,
     }
