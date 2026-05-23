@@ -156,6 +156,27 @@ def read_workbook():
             d['top3'].append({'name': str(name), 'amount': float(amt),
                               'pct': float(pct_ or 0), 'prev_pct': float(prev or 0)})
 
+    # Chart historical data from ניתוח תזרים rows 46-52
+    try:
+        ws_tz = wb['ניתוח תזרים']
+        tz_rows = list(ws_tz.iter_rows(values_only=True))
+        def tz(row_1, col_1):  # 1-based
+            try:
+                v = tz_rows[row_1-1][col_1-1]
+                return int(float(v)) if isinstance(v, (int,float)) and v else 0
+            except: return 0
+        # Row 46 = headers (col 2=מאי25 .. col 12=מרץ26, col13=אפריל26)
+        # Row 47 = income, 48 = expenses, 49 = invest, 50 = surplus
+        d['chart_months']   = [str(tz_rows[45][c] or '') for c in range(1, 12)]
+        d['chart_income']   = [tz(47, c) for c in range(2, 13)]
+        d['chart_expenses'] = [tz(48, c) for c in range(2, 13)]
+        d['chart_invest']   = [tz(49, c) for c in range(2, 13)]
+        d['chart_surplus']  = [tz(52, c) for c in range(2, 13)]
+    except Exception as e:
+        print(f'  Chart data read failed: {e}')
+        d['chart_months'] = []
+        d['chart_income'] = d['chart_expenses'] = d['chart_invest'] = d['chart_surplus'] = []
+
     # Holdings
     d['holdings'] = []
     try:
@@ -308,6 +329,10 @@ def fill_template(template, d):
         '__KASPIYOT_DEPLOY_NOTE__': deploy_note,
         '__RSU_PCT_FROM_TARGET__': rsu_pct_from_target,
         '__TOP5_ROWS__':          top5_html,
+        '__CHART_INCOME__':        ','.join(str(v) for v in d.get('chart_income', [])),
+        '__CHART_EXPENSES__':      ','.join(str(v) for v in d.get('chart_expenses', [])),
+        '__CHART_INVEST__':        ','.join(str(v) for v in d.get('chart_invest', [])),
+        '__CHART_SURPLUS__':       ','.join(str(v) for v in d.get('chart_surplus', [])),
         '__TOP3_ROWS__':          top3_html,
         '__HOLDINGS_ROWS__':      holdings_html,
     }
