@@ -259,21 +259,23 @@ def read_workbook():
         d['top3'] = [{'name': cat, 'amount': v[2], 'pct': v[2]/total_cur, 'prev_pct': v[0]/total_cur}
                      for cat, v in top3_from_cats]
         # Category change stats
-        d['cat_range_start'] = month_names_he[months_back[0][1]]
-        total_m0 = sum(v[0] for _, v in cats_with_data)
-        total_m2 = sum(v[2] for _, v in cats_with_data)
-        if total_m0 > 0:
-            chg = (total_m2 - total_m0) / total_m0
+        # Compare current month (index 2) vs previous month (index 1)
+        prev_month_name = month_names_he[months_back[1][1]]
+        d['cat_range_start'] = prev_month_name
+        total_prev = sum(v[1] for _, v in cats_with_data)
+        total_cur2 = sum(v[2] for _, v in cats_with_data)
+        if total_prev > 0:
+            chg = (total_cur2 - total_prev) / total_prev
             d['cat_total_chg'] = f"{'▲' if chg>=0 else '▼'}{abs(chg)*100:.1f}%"
             d['cat_total_chg_color'] = 'c-red' if chg >= 0 else 'c-green'
         else:
             d['cat_total_chg'] = '—'
             d['cat_total_chg_color'] = 'c-muted'
-        # Per-category changes for top 3
+        # Per-category changes vs previous month
         changes = []
         for cat, v in top3_from_cats:
-            if v[0] > 0:
-                c = (v[2] - v[0]) / v[0]
+            if v[1] > 0:
+                c = (v[2] - v[1]) / v[1]
                 arrow = '▲' if c >= 0 else '▼'
                 clr = 'c-red' if c >= 0 else 'c-green'
                 changes.append(f'{cat} <span class="{clr}">{arrow}{abs(c)*100:.1f}%</span>')
