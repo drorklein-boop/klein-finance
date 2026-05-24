@@ -258,6 +258,26 @@ def read_workbook():
         total_cur = sum(v[2] for _, v in top3_from_cats) or 1
         d['top3'] = [{'name': cat, 'amount': v[2], 'pct': v[2]/total_cur}
                      for cat, v in top3_from_cats]
+        # Category change stats
+        d['cat_range_start'] = month_names_he[months_back[0][1]]
+        total_m0 = sum(v[0] for _, v in cats_with_data)
+        total_m2 = sum(v[2] for _, v in cats_with_data)
+        if total_m0 > 0:
+            chg = (total_m2 - total_m0) / total_m0
+            d['cat_total_chg'] = f"{'▲' if chg>=0 else '▼'}{abs(chg)*100:.1f}%"
+            d['cat_total_chg_color'] = 'c-red' if chg >= 0 else 'c-green'
+        else:
+            d['cat_total_chg'] = '—'
+            d['cat_total_chg_color'] = 'c-muted'
+        # Per-category changes for top 3
+        changes = []
+        for cat, v in top3_from_cats:
+            if v[0] > 0:
+                c = (v[2] - v[0]) / v[0]
+                arrow = '▲' if c >= 0 else '▼'
+                clr = 'c-red' if c >= 0 else 'c-green'
+                changes.append(f'{cat} <span class="{clr}">{arrow}{abs(c)*100:.1f}%</span>')
+        d['cat_changes_text'] = ' | '.join(changes) if changes else '—'
         print(f"  Categories: {len(cats_with_data)} cats, months: {[month_names_he[m] for y,m in months_back]}")
     except Exception as e:
         print(f'  Category computation failed: {e}')
@@ -281,6 +301,13 @@ def read_workbook():
     # Derived
     d['pension_all']       = d['pension_total'] + d['hishtalmut_total']
     d['rsu_total']         = d['rsu_vested'] + d['rsu_unvested']
+    d['income_children'] = 0  # קצבת ילדים — not in workbook currently
+    d['income_other']    = 0
+    d['income_other_note'] = ''
+    d['exp_other']       = max(0, d.get('expenses', 0) - abs(d.get('exp_credit', 0)) - d.get('mortgage', 0))
+    exp_total_for_other  = d.get('expenses', 0) or 1
+    d['exp_other_pct']   = f"{d['exp_other']/exp_total_for_other*100:.1f}"
+
     try:
         ws_hist = xw_wb.sheets['היסטוריה']
         rate_val = ws_hist.range((25, 14)).value
@@ -435,6 +462,15 @@ def fill_template(template, d):
         '__CATS_JSON__':           d.get('cats_json', ''),
         '__CAT_MONTHS__':          d.get('cat_months', "'ינואר','פברואר','מרץ'"),
         '__CAT_RANGE__':           d.get('cat_range', 'ינואר עד מרץ'),
+        '__CAT_RANGE_START__':     d.get('cat_range_start', 'ינואר'),
+        '__CAT_TOTAL_CHG__':       d.get('cat_total_chg', '—'),
+        '__CAT_TOTAL_CHG_COLOR__': d.get('cat_total_chg_color', 'c-muted'),
+        '__CAT_CHANGES_TEXT__':    d.get('cat_changes_text', '—'),
+        '__INCOME_CHILDREN__':     ils(d.get('income_children', 0)),
+        '__INCOME_OTHER__':        ils(d.get('income_other', 0)),
+        '__INCOME_OTHER_NOTE__':   d.get('income_other_note', ''),
+        '__EXP_OTHER__':           ils(d.get('exp_other', 0)),
+        '__EXP_OTHER_PCT__':       d.get('exp_other_pct', '0'),
         '__CHART_INSIGHTECH__':    ','.join(str(v) for v in d.get('chart_insightech', [])),
         '__TOP3_ROWS__':          top3_html,
         '__HOLDINGS_ROWS__':      holdings_html,
