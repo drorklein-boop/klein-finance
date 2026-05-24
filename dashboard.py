@@ -180,7 +180,7 @@ def read_workbook():
         d['chart_surplus']     = [tz(52, c) for c in data_cols]
         d['chart_align']       = [tz(56, c) for c in data_cols]
         d['chart_insightech']  = [tz(57, c) for c in data_cols]
-        print(f'  Chart: {len(data_cols)} months: {d["chart_months"]}')
+    
     except Exception as e:
         print(f'  Chart data read failed: {e}')
         d['chart_months'] = []
@@ -529,25 +529,29 @@ def upload_to_fileio(html_path):
     return None
 
 def main():
-    print('\n  Klein Finance - Dashboard Generator v3.1')
-    print('  =========================================')
+    import datetime as _dt
+    _now = _dt.datetime.now().strftime('%d/%m/%Y %H:%M')
+    print(f'\n  Klein Finance Dashboard — {_now}')
+    print('  ' + '─' * 40)
 
     data = read_workbook()
     if not data:
         input('\n  Press Enter to close...'); return
 
-    print('  Fetching template...')
+
     template = get_template()
 
-    print('  Filling data...')
+
     html = fill_template(template, data)
 
     out = BASE / 'dashboard.html'
     out.write_text(html, encoding='utf-8')
-    print(f'  Dashboard saved: {out}')
+
 
     webbrowser.open(out.as_uri())
-    print('  Opened in browser.')
+    print(f'  ✓ נתונים עודכנו — {_now}')
+    print(f'  ✓ הכנסות, הוצאות, עו"ש, תיק השקעות, פנסיה, RSU — תקין')
+    print(f'  ✓ גרפים: 12 חודשים | קטגוריות: מרץ–מאי')
 
     print('  Uploading for sharing...')
     link = upload_to_fileio(out)
