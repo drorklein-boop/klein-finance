@@ -320,7 +320,7 @@ input[type=range]{flex:1;accent-color:var(--gold);cursor:pointer}
 
 <!-- STRIP PANEL: INCOME -->
 <div class="strip-panel" id="panel-income">
-  <div class="section-label" style="margin-top:0">פירוט הכנסות — אפריל 2026</div>
+  <div class="section-label" style="margin-top:0">פירוט הכנסות — __PERIOD__</div>
   <div class="income-grid">
     <div class="income-card">
       <div class="income-label">משכורת Align</div>
@@ -332,16 +332,16 @@ input[type=range]{flex:1;accent-color:var(--gold);cursor:pointer}
       <div class="income-label">משכורת Insightech</div>
       <div class="income-value c-blue">__INCOME_OTHER__</div>
       <div class="income-sub c-muted">ממוצע אחרון (פבר׳ 26)</div>
-      <div class="income-sub c-yellow">לא דווח עדיין לאפריל</div>
+      <div class="income-sub c-yellow">__INCOME_OTHER_NOTE__</div>
     </div>
     <div class="income-card">
       <div class="income-label">קצבת ילדים</div>
-      <div class="income-value">₪276</div>
+      <div class="income-value">__INCOME_CHILDREN__</div>
       <div class="income-sub c-muted">קבוע</div>
     </div>
     <div class="income-card">
       <div class="income-label">אחר</div>
-      <div class="income-value">₪2,833</div>
+      <div class="income-value">__INCOME_OTHER__</div>
       <div class="income-sub c-muted">עמלות / חזרי כספים</div>
     </div>
   </div>
@@ -355,7 +355,7 @@ input[type=range]{flex:1;accent-color:var(--gold);cursor:pointer}
 
 <!-- STRIP PANEL: EXPENSES -->
 <div class="strip-panel" id="panel-expenses">
-  <div class="section-label" style="margin-top:0">פירוט הוצאות — אפריל 2026</div>
+  <div class="section-label" style="margin-top:0">פירוט הוצאות — __PERIOD__</div>
   <div class="exp-breakdown-row">
     <div class="exp-breakdown-name">כרטיסי אשראי (מקס + אישראכרט)</div>
     <div class="exp-breakdown-bar-wrap"><div class="exp-breakdown-bar" style="width:__EXP_CREDIT_PCT__%"></div></div>
@@ -377,8 +377,8 @@ input[type=range]{flex:1;accent-color:var(--gold);cursor:pointer}
   <div class="exp-breakdown-row">
     <div class="exp-breakdown-name">עמלות ואחר</div>
     <div class="exp-breakdown-bar-wrap"><div class="exp-breakdown-bar" style="width:0.3%"></div></div>
-    <div class="exp-breakdown-val">₪140</div>
-    <div class="exp-breakdown-pct">0.3%</div>
+    <div class="exp-breakdown-val">__EXP_OTHER__</div>
+    <div class="exp-breakdown-pct">__EXP_OTHER_PCT__%</div>
   </div>
   <div class="note" style="margin-top:12px">סה״כ הוצאות חודש זה: __EXPENSES__ &nbsp;|&nbsp; ממוצע שנתי: __AVG_MONTHLY__ לחודש</div>
 </div>
@@ -451,7 +451,7 @@ input[type=range]{flex:1;accent-color:var(--gold);cursor:pointer}
           </tbody>
         </table>
         <div class="macro-box" style="margin-top:14px">
-          <div class="macro-title">ניתוח תיק + המלצות מאקרו — אפריל 2026</div>
+          <div class="macro-title">ניתוח תיק + המלצות מאקרו — __PERIOD__</div>
           <div class="macro-body">
             <p><strong>מבנה התיק:</strong> ACWI ב-40% הוא הגיוני וטוב. אבל יש לך חשיפה כפולה לשוק האמריקאי — ACWI מכיל ~65% מניות אמריקאיות, ועל זה מתווספת פוזיציית S&P 500 של 7.8%. ביחד, ~34% מהתיק הוא בעצם ארה״ב בלבד. זה לא רע בהכרח, אבל כדאי שתדע.</p>
             <p><strong>זהב ב-5.3%:</strong> עובד מצוין — +87% רווח. בסביבת אי-וודאות גיאופוליטית ומטבעית זו פוזיציה שמחזיקה ערך. לא נגע בה.</p>
@@ -661,11 +661,11 @@ __TOP5_ROWS__
     <div class="exp-card">
       <div class="exp-card-title">Top 3 — קטגוריות</div>
       <div class="cat-total-change">
-        <span style="color:var(--muted);font-size:12px">סה״כ אשראי ממרץ:</span>
-        <span class="c-green">▼14.8%</span>
+        <span style="color:var(--muted);font-size:12px">סה״כ אשראי מ__CAT_RANGE_START__:</span>
+        <span class="__CAT_TOTAL_CHG_COLOR__">__CAT_TOTAL_CHG__</span>
       </div>
 __TOP3_ROWS__
-      <div class="cat-changes-row">שינוי ממרץ: מזון <span class="c-red">▼30.6%</span> | פנאי <span class="c-green">▲22.9%</span> | מסעדות <span class="c-green">▲44.1%</span></div>
+      <div class="cat-changes-row">שינוי מ__CAT_RANGE_START__: __CAT_CHANGES_TEXT__</div>
 
       <!-- SPENDING TREND TOGGLE -->
       <div class="trend-toggle" onclick="toggleTrend()" ontouchstart="">
@@ -709,7 +709,7 @@ __TOP3_ROWS__
       </div>
       <div class="tab-pane" id="invest-macro">
         <div class="macro-box">
-          <div class="macro-title">ניתוח שוק גלובלי — אפריל 2026</div>
+          <div class="macro-title">ניתוח שוק גלובלי — __PERIOD__</div>
           <div class="macro-signal-row">
             <div class="tdot yellow" style="width:15px;height:15px;box-shadow:0 0 9px var(--yellow)"></div>
             <div class="macro-signal-label c-yellow">סיגנל צהוב — פרוס בהדרגה</div>
