@@ -60,7 +60,10 @@ def read_workbook():
         return None
 
     # Force full recalculation before reading any values
+    xw_wb.app.calculation = 'automatic'
     xw_wb.app.calculate()
+    import time as _time; _time.sleep(1)  # wait for calculation to finish
+    print(f'  K24 bank value: {xw_wb.sheets["דוח חודשי"].range((24,11)).value}')
 
     ws_xw = xw_wb.sheets['דוח חודשי']
 
