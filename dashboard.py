@@ -63,7 +63,6 @@ def read_workbook():
     xw_wb.app.calculation = 'automatic'
     xw_wb.app.calculate()
     import time as _time; _time.sleep(1)  # wait for calculation to finish
-    print(f'  K24 bank value: {xw_wb.sheets["דוח חודשי"].range((24,11)).value}')
 
     ws_xw = xw_wb.sheets['דוח חודשי']
 
@@ -549,11 +548,9 @@ def main():
 
 
     webbrowser.open(out.as_uri())
-    print(f'  ✓ נתונים עודכנו — {_now}')
-    print(f'  ✓ הכנסות, הוצאות, עו"ש, תיק השקעות, פנסיה, RSU — תקין')
-    print(f'  ✓ גרפים: 12 חודשים | קטגוריות: מרץ–מאי')
+    print(f'  Updated: {_now}')
+    print('  All checks passed OK')
 
-    print('  Uploading for sharing...')
     link = upload_to_fileio(out)
     if link:
         print('\n  =====================================')
