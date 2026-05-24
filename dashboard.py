@@ -256,7 +256,7 @@ def read_workbook():
         # Build top3 from computed categories (current month = last index)
         top3_from_cats = cats_with_data[:3]
         total_cur = sum(v[2] for _, v in top3_from_cats) or 1
-        d['top3'] = [{'name': cat, 'amount': v[2], 'pct': v[2]/total_cur}
+        d['top3'] = [{'name': cat, 'amount': v[2], 'pct': v[2]/total_cur, 'prev_pct': v[0]/total_cur}
                      for cat, v in top3_from_cats]
         # Category change stats
         d['cat_range_start'] = month_names_he[months_back[0][1]]
