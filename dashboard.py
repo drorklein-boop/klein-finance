@@ -59,6 +59,9 @@ def read_workbook():
         print('  ERROR: No .xlsm workbook open in Excel')
         return None
 
+    # Force full recalculation before reading any values
+    xw_wb.app.calculate()
+
     ws_xw = xw_wb.sheets['דוח חודשי']
 
     def r(row_1based, col_1based):
