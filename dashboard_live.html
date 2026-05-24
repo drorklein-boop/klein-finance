@@ -1013,7 +1013,7 @@ function renderTrendTable(){
   const maxV=Math.max(...CATS.flatMap(c=>c.vals));
   const colors=['#e8c47e','#7baad4','#3bbd6e'];
   let h=`<table class="trend-tbl"><thead><tr><th>קטגוריה</th>`;
-  ['ינואר','פברואר','מרץ'].forEach((m,i)=>{ h+=`<th style="color:${colors[i]}">${m}</th>`; });
+  CAT_MONTHS.forEach((m,i)=>{ h+=`<th style="color:${colors[i]}">${m}</th>`; });
   h+='</tr></thead><tbody>';
   CATS.forEach(cat=>{
     h+=`<tr><td>${cat.name}</td>`;
