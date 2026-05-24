@@ -253,6 +253,11 @@ def read_workbook():
         d['cats_json']  = cats_json
         d['cat_months'] = cat_months
         d['cat_range']  = f"{month_names_he[months_back[0][1]]} עד {month_names_he[months_back[2][1]]}"
+        # Build top3 from computed categories (current month = last index)
+        top3_from_cats = cats_with_data[:3]
+        total_cur = sum(v[2] for _, v in top3_from_cats) or 1
+        d['top3'] = [{'name': cat, 'amount': v[2], 'pct': v[2]/total_cur}
+                     for cat, v in top3_from_cats]
         print(f"  Categories: {len(cats_with_data)} cats, months: {[month_names_he[m] for y,m in months_back]}")
     except Exception as e:
         print(f'  Category computation failed: {e}')
