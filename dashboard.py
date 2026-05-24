@@ -1,4 +1,4 @@
-# Klein Finance - Dashboard Generator v3.0.1
+# Klein Finance - Dashboard Generator v3.1.1
 import sys, json, warnings, webbrowser, datetime, urllib.request
 warnings.filterwarnings('ignore')
 from pathlib import Path
@@ -470,7 +470,7 @@ def upload_to_fileio(html_path):
     return None
 
 def main():
-    print('\n  Klein Finance - Dashboard Generator v3.0')
+    print('\n  Klein Finance - Dashboard Generator v3.1')
     print('  =========================================')
 
     data = read_workbook()
