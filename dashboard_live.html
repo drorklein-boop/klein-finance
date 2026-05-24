@@ -578,7 +578,22 @@ input[type=range]{flex:1;accent-color:var(--gold);cursor:pointer}
           פעימות 2021+2022 — בהפסד על הבסיס, אין מס בכל מחיר מכירה. ניקוי פוזיציות ישנות יצור הפסד הון לקיזוז.<br>
           פעימת 2025 נעולה עד 20.2.2027. מכירה לפני כן = מס שולי 47% במקום 25%.
         </div>
-        <div style="font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">מחשבון מכירה לפי מחיר יעד ↓</div>
+        <div style="background:var(--bg3);border-radius:8px;padding:12px 14px;margin-bottom:14px;display:flex;gap:16px;flex-wrap:wrap">
+          <div style="flex:1;min-width:120px">
+            <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Vested (available)</div>
+            <div style="font-family:var(--mono);font-size:16px;color:var(--green)">$163,380</div>
+          </div>
+          <div style="flex:1;min-width:120px">
+            <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Unvested (locked)</div>
+            <div style="font-family:var(--mono);font-size:16px;color:var(--blue)">$351,430</div>
+          </div>
+          <div style="flex:1;min-width:120px">
+            <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Total portfolio</div>
+            <div style="font-family:var(--mono);font-size:18px;font-weight:600;color:var(--gold)">$514,810</div>
+          </div>
+        </div>
+        <div>
+          <div class="d-section-label" style="margin-top:18px">מכירה לפי מחיר יעד ↓</div>
         <div class="slider-row" style="margin-bottom:10px">
           <span class="slider-label">יעד:</span>
           <input type="range" min="150" max="600" value="300" id="rsu-slider2" oninput="syncSlider(+this.value)">
