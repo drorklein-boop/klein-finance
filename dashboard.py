@@ -332,7 +332,9 @@ def read_workbook():
     d['stocks_pct']        = 71
     d['mm_pct']            = 29
     # Approx ALGN price from RSU vested / vested shares
-    d['algn_price']        = 163.38  # use last known; update annually
+    # Compute ALGN price from vested value / vested shares (1,000 total vested)
+    vested_shares = 76 + 99 + 245 + 362 + 218  # total vested as of May 2026
+    d['algn_price'] = round(d['rsu_vested'] / vested_shares, 2) if vested_shares > 0 else 163.38
 
     return d
 
@@ -433,6 +435,11 @@ def fill_template(template, d):
         '__RSU_USD__':            usd(d['rsu_total']),
         '__RSU_ILS__':            ils(d['rsu_ils']),
         '__ALGN_PRICE__':         f'${d["algn_price"]:,.2f}',
+        '__ALGN_PRICE_RAW__':     str(d['algn_price']),
+        '__ALGN_FROM_HIGH__':     f'−{int((1 - d["algn_price"]/735)*100)}% מהשיא',
+        '__ALGN_TO_TARGET__':     f'+{int((300/d["algn_price"]-1)*100)}%',
+        '__STOCKS_PCT__':         str(d.get('stocks_pct', 71)),
+        '__MM_PCT__':             str(d.get('mm_pct', 29)),
         '__RSU_VESTED_USD__':     usd(d['rsu_vested']),
         '__RSU_VESTED_ILS__':     ils(d['rsu_vested_ils']),
         '__PENSION_TOTAL_K__':    k(d['pension_total']),
