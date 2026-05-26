@@ -95,7 +95,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Heebo',sans-serif;
 .exp-row-amount{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--gold2);flex-shrink:0}
 .cat-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)}
 .cat-row:last-child{border-bottom:none}
-.cat-bar-wrap{flex:1;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden}
+.cat-bar-wrap{flex:1;min-width:0;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden}
 .cat-bar-fill{height:100%;background:var(--gold);border-radius:3px}
 .cat-name{font-size:13px;min-width:110px}
 .cat-amount{font-family:var(--mono);font-size:13px;color:var(--gold2);min-width:58px;text-align:left}
@@ -256,15 +256,15 @@ input[type=range]{flex:1;accent-color:var(--gold);cursor:pointer}
   <div class="header-top">
     <div class="header-brand">מאזן קליין<strong>דשבורד חודשי</strong></div>
     <div class="header-meta">
-      <div><strong>May 2026</strong> | עדכון: 24/05/2026</div>
-      <div>שער דולר: <strong>₪2.8913</strong> (24/05/2026)</div>
+      <div><strong>May 2026</strong> | עדכון: 26/05/2026</div>
+      <div>שער דולר: <strong>₪2.8778</strong> (26/05/2026)</div>
       <div style="color:var(--yellow)">★ חודש בונוס שנתי</div>
     </div>
   </div>
   <div class="nw-split">
     <div class="nw-block" style="background:#0e1322">
       <div class="nw-label">נכסים נזילים נטו</div>
-      <div class="nw-val c-gold">₪3,394,518</div>
+      <div class="nw-val c-gold">₪3,387,568</div>
       <div class="nw-sub">תיק + עו״ש + RSU נטו − משכנתא</div>
     </div>
     <div class="nw-block" style="background:#0b1420">
@@ -274,8 +274,8 @@ input[type=range]{flex:1;accent-color:var(--gold);cursor:pointer}
     </div>
     <div class="nw-block" style="background:#0d0e16">
       <div class="nw-label">סה״כ נכסים לפני מס</div>
-      <div class="nw-val c-gold">₪6,465,250</div>
-      <div class="nw-sub">משכנתא: <span class="c-red">−₪244,452</span> | ברוטו: ₪7,467,282</div>
+      <div class="nw-val c-gold">₪6,461,567</div>
+      <div class="nw-sub">משכנתא: <span class="c-red">−₪244,452</span> | ברוטו: ₪7,460,332</div>
     </div>
   </div>
 </div>
@@ -330,7 +330,7 @@ input[type=range]{flex:1;accent-color:var(--gold);cursor:pointer}
     </div>
     <div class="income-card">
       <div class="income-label">משכורת Insightech</div>
-      <div class="income-value c-blue">₪0</div>
+      <div class="income-value c-blue">₪17,586</div>
       <div class="income-sub c-muted">ממוצע אחרון (פבר׳ 26)</div>
       <div class="income-sub c-yellow"></div>
     </div>
@@ -341,7 +341,7 @@ input[type=range]{flex:1;accent-color:var(--gold);cursor:pointer}
     </div>
     <div class="income-card">
       <div class="income-label">אחר</div>
-      <div class="income-value">₪0</div>
+      <div class="income-value">₪17,586</div>
       <div class="income-sub c-muted">עמלות / חזרי כספים</div>
     </div>
   </div>
@@ -398,7 +398,7 @@ input[type=range]{flex:1;accent-color:var(--gold);cursor:pointer}
         <div class="pcard-sub c-muted">לחץ לגרפי תזרים</div>
       </div>
       <div class="pcard-body">
-        <div style="font-size:12px;color:var(--muted);margin-bottom:4px">ניירות ערך: ₪1,305,585 &nbsp;|&nbsp; אשראי: —</div>
+        
         <div class="chart-grid" id="charts-leumi">
           <div class="chart-card">
             <div class="chart-title">הכנסות vs הוצאות — 11 חודשים</div>
@@ -516,7 +516,7 @@ input[type=range]{flex:1;accent-color:var(--gold);cursor:pointer}
       <div class="pcard-head">
         <div class="pcard-label">RSU — Align Technology <span class="pcard-chevron">▼</span></div>
         <div class="pcard-value">$514,810</div>
-        <div class="pcard-sub c-muted">₪1,488,471 נטו &nbsp;|&nbsp; ALGN $163.38</div>
+        <div class="pcard-sub c-muted">₪1,481,521 נטו &nbsp;|&nbsp; ALGN $163.38</div>
         <div class="pcard-sub c-yellow">יעד: $300 &nbsp;|&nbsp; −38% מהיעד</div>
       </div>
       <div class="pcard-body">
@@ -566,7 +566,7 @@ input[type=range]{flex:1;accent-color:var(--gold);cursor:pointer}
           <tfoot>
             <tr>
               <td colspan="3" class="c-muted" style="font-size:10px">סה״כ זמין: 1,000 מניות חופשיות</td>
-              <td colspan="2" class="c-gold">$163,380 ≈ ₪472,381</td>
+              <td colspan="2" class="c-gold">$163,380 ≈ ₪470,175</td>
               <td></td>
             </tr>
           </tfoot>
@@ -857,8 +857,7 @@ input[type=range]{flex:1;accent-color:var(--gold);cursor:pointer}
     </div>
     <div class="d-body">
       <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('rsu','details',this)" ontouchstart="">פירוט פעימות</button>
-        <button class="tab-btn" onclick="switchTab('rsu','macro',this)" ontouchstart="">ניתוח ALGN</button>
+        <div style="font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">ניתוח ALGN</div>
       </div>
       <div class="tab-pane active" id="rsu-details">
         <div class="slider-row">
