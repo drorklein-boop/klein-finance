@@ -107,7 +107,9 @@ def read_workbook():
     d['rsu_vested']      = float(rsu['H13'].value or 0)
     d['rsu_unvested']    = float(rsu['H14'].value or 0)
 
-    d['pension_dror_chg']  = float(r(17, 12) or 0)  # L17
+    d['pension_dror_chg']  = float(r(13, 12) or 0)  # L13 = pension total monthly change
+    d['hishtalmut_chg']    = float(r(14, 12) or 0)  # L14 = hishtalmut total monthly change
+    d['pension_all_chg']   = d['pension_dror_chg'] + d['hishtalmut_chg']
     d['pension_monthly']   = float(r(21, 11) or 0)  # K21
     d['hishtalmut_dror_f1']= d['hishtalmut_dror'] * 0.47
     d['hishtalmut_dror_f2']= d['hishtalmut_dror'] * 0.53
