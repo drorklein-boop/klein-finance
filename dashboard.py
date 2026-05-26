@@ -309,7 +309,8 @@ def read_workbook():
     d['pension_all']       = d['pension_total'] + d['hishtalmut_total']
     d['rsu_total']         = d['rsu_vested'] + d['rsu_unvested']
     d['income_children'] = 0  # קצבת ילדים — not in workbook currently
-    d['income_other']    = 0
+    # Insightech income — last month from chart data
+    d['income_other']    = d.get('chart_insightech', [0])[-1] if d.get('chart_insightech') else 0
     d['income_other_note'] = ''
     d['exp_other']       = max(0, d.get('expenses', 0) - abs(d.get('exp_credit', 0)) - d.get('mortgage', 0))
     exp_total_for_other  = d.get('expenses', 0) or 1
@@ -322,6 +323,7 @@ def read_workbook():
     except:
         d['rate'] = 3.65
     d['rsu_ils']           = d['rsu_total'] * d['rate']
+    d['rsu_vested_ils']    = d['rsu_vested'] * d['rate']
     d['rsu_vested_ils']    = d['rsu_vested'] * d['rate']
     d['liquid']            = d['portfolio_val'] + d['bank'] + d['rsu_ils']
     d['gross']             = d['liquid'] + d['pension_all']
